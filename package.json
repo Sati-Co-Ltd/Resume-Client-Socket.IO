@@ -1,0 +1,36 @@
+{
+  "name": "resume-client-socket.io",
+  "version": "1.0.0",
+  "description": "Resume Client API for Socket.IO and Node.JS - Medical Speech to Summarized Text",
+  "main": " ",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "#"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pahntanapat/Resume-Client-Socket.IO.git"
+  },
+  "keywords": [
+    "Resume",
+    "Client",
+    "Socket.IO",
+    "Node.JS"
+  ],
+  "author": "Tanapat Kahabodeekanokkul",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pahntanapat/Resume-Client-Socket.IO/issues"
+  },
+  "homepage": "https://github.com/pahntanapat/Resume-Client-Socket.IO#readme",
+  "dependencies": {
+    "axios": "^0.21.4",
+    "axios-oauth-client": "^1.4.3",
+    "axios-token-interceptor": "^0.2.0",
+    "form-data": "^4.0.0",
+    "set-cookie-parser": "^2.4.8",
+    "socket.io": "^4.2.0"
+  }
+}
