@@ -1,6 +1,8 @@
 # Guide for Javascript and Node.js Client
 
 - [Guide for Javascript and Node.js Client](#guide-for-javascript-and-nodejs-client)
+  - [**_Important!_** Provide JavaScript for HTML <a name="prepare"></a>](#important-provide-javascript-for-html-)
+    - [Direct copy &amp; paste to your `./js/` path](#direct-copy--paste-to-your-js-path)
   - [Conclusion of different](#conclusion-of-different)
   - [Conversation Mode](#conversation-mode)
     - [Prepare HTML page for script <a name="prepare"></a>](#prepare-html-page-for-script-)
@@ -26,6 +28,38 @@
     - [Update the Result](#update-the-result-1)
   - [More Information](#more-information)
    
+## **_Important!_** Provide JavaScript for HTML <a name="prepare"></a>
+
+
+`ResumeOne` requires [RecordRTC](https://github.com/muaz-khan/RecordRTC) to control microphone, [Socket.IO](https://socket.io/) to connect with server and [jQuery](https://jquery.com/) if you want to use [`ResumeOne.loadSectionList()`](public/js/Resume.js) method.
+
+Please include JS files to HTML. They locate in `node_modules/resume-client-socket.io/public/`. You can provide them by copy &amp; paste to your frontend, use public Resume CDN *(not recommend for intranet use)*, or route HTTP server to their directory.
+
+### Direct copy &amp; paste to your `./js/` path
+
+```HTML
+<head>
+    <!-- Other tags -->
+
+    <script src="./js/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./js/Resume.js"></script>
+
+    <!-- more other tags -->
+</head>
+<body>
+    <!-- Other tags -->
+
+    <script src="./js/RecordRTC.min.js"></script>
+    <!-- Your script here -->
+</body>
+```
+
+
+  
+
+
+
 ## Conclusion of different
 
 | Part                                                                                                                                                                                                   | Conversation Mode                                                        | Dictation Mode                                                                                                | Combinatory Mode                           |
