@@ -131,7 +131,7 @@ class OptionBindSIO {
  * @summary Bind Resume Server-sided script to Socket.IO as optionBindSIO.nameSpace or root. 
  * @param {OptionBindSIO} optionBindSIO Option for server binding
  * @param {OptionSIO} optionSIO option for Resume server-sided script.
- * @returns {Server} Socket.IO Server object
+ * @returns {socket.io~Server} Socket.IO Server object
 */
 function BindSIO(optionBindSIO, optionSIO) {
     let io = optionBindSIO.io;
