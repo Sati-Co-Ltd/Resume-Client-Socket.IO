@@ -7,7 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "test_client": "node test/client.js"
+    "test_client": "node test/client.js",
+    "test_path": "node test/path.js"
   },
   "repository": {
     "type": "git",
