@@ -3,11 +3,11 @@
  */
 
 /**
-* @file Resume-Socket-IO-Server.js - Server-sided Node.JS for Resume API and Socket.IO Server management
-* @author Tanapat Kahabodeekanokkul
-* @copyright Tanapat Kahabodeekanokkul 2021
-* @license Tanapat-Kahabodeekanokkul
-*/
+ * @file Resume-Socket-IO-Server.js - Server-sided Node.JS for Resume API and Socket.IO Server management
+ * @author Tanapat Kahabodeekanokkul
+ * @copyright Tanapat Kahabodeekanokkul 2021
+ * @license Tanapat-Kahabodeekanokkul
+ */
 
 const path = require('path');
 const colours = { reset: "[0m", bright: "[1m", dim: "[2m", underscore: "[4m", blink: "[5m", reverse: "[7m", hidden: "[8m", fg: { black: "[30m", red: "[31m", green: "[32m", yellow: "[33m", blue: "[34m", magenta: "[35m", cyan: "[36m", white: "[37m", crimson: "[38m" }, bg: { black: "[40m", red: "[41m", green: "[42m", yellow: "[43m", blue: "[44m", magenta: "[45m", cyan: "[46m", white: "[47m", crimson: "[48m" } };
@@ -33,7 +33,7 @@ const UPDATE_INTERVAL = 5000;
  * @property {string} docFormat Format of document given from ResumeOne().newSession(...) to let the speech-to-text API to generate returned data - reference the name from "C-CDA 1.1.0 on FHIR" otherwise will be "Default". Please read [README.md](../README.md) and http://hl7.org/fhir/us/ccda/artifacts.html
  * @property {Boolean} multiSpeaker mode of transcription automatically given from ResumeOne().newSession(...)
  * @property {Date} userStartTime session starting datetime automatically given from ResumeOne().newSession(...)
-*/
+ */
 
 /**
  * The Socket.IO SIOOnConnection callback
@@ -95,7 +95,7 @@ const UPDATE_INTERVAL = 5000;
  * @param {endTranscriptSessionCallback} [onEndTranscriptSessionCallback] Callback when Resume.js client end the Resume session
  * @param {receivedEndTranscriptSessionCallback} [onReceivedEndTranscriptSessionCallback] Callback Resume API response that the session ended
  * @param {receivedSoundCallback} [onReceivedSoundCallback] Callback when Resume Received sound chunk
-*/
+ */
 class OptionSIO {
     resumeApiClient
     // HttpClient  plan support WebSocket in future
@@ -117,7 +117,7 @@ class OptionSIO {
  * @param {string} [nameSpace] optional namespace for Socket.IO
  * @param {object} [ioOptions] option for create Socket.IO server if io is undefined.
  * @param {int} [port] port for create Socket.IO server if io is undefined.
-*/
+ */
 class OptionBindSIO {
     server
     io
@@ -133,7 +133,7 @@ class OptionBindSIO {
  * @param {OptionBindSIO} optionBindSIO Option for server binding
  * @param {OptionSIO} optionSIO option for Resume server-sided script.
  * @returns {socket.io~Server} Socket.IO Server object
-*/
+ */
 function BindSIO(optionBindSIO, optionSIO) {
     let io = optionBindSIO.io;
     if (!optionBindSIO) {
@@ -161,12 +161,18 @@ function BindSIO(optionBindSIO, optionSIO) {
     }
     return io;
 }
-
-
+/** 
+ * Get path of static JavaScript Directory of Resume.js and its dependencies
+ * @return {string} path to static JavaScript files
+ */
 function staticJsDir() {
     return path.resolve(__dirname, 'public/js')
 }
 
+/** 
+ * Get array of path of static JavaScript files of Resume.js and its dependencies
+ * @return {string[]} array of path of static files in JavaScript directory
+ */
 function staticJsFiles() {
     return require('fs').readdirSync(staticJsDir()).map((val) => {
         return path.resolve(__dirname, 'public/js', val);
