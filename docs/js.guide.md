@@ -24,7 +24,7 @@
     - [Start new session for recording](#start-new-session-for-recording-1)
     - [Pause, Resume  and Stop recording and End session](#pause-resume--and-stop-recording-and-end-session)
     - [Update the Result](#update-the-result-1)
-  - [More details](#more-details)
+  - [More Information](#more-information)
    
 ## Conclusion of different
 
@@ -110,6 +110,9 @@ Place [`ResumeOne`](Resume.js.md#ResumeOne) object construction in callback afte
 
 ```JS
 var socket = io();
+
+//// If you use Socket.IO server from different Domain or Path,
+//// Please check out  https://socket.io/docs/v4/client-initialization/#From-a-different-domain .
 
 ///
 /// in completely loaded callback
@@ -321,9 +324,12 @@ Same to [Dictation Mode](#dict-update)
 -------  
 <br/>  
 
-## More details
-- [Read me file](../README.md)
-- [Documentation](Resume.js.md)
-  
+## More Information
+ - [Read me file](../README.md)
+ - [Quick Start Guide for Server-sided Node.JS](node.guide.md)
+ - [Quick Start Guide for Client-sided Resume.js](js.guide.md)
+ - [Resume Socket.IO Server](Resume-Socket-IO-Server.md)
+ - [Client-sided Resume.js](Resume.js.md)
+
 &copy; 2021 - copyright by Tanapat Kahabodeekanokkul - the founder of [Resume](https://sati.co.th).
 
