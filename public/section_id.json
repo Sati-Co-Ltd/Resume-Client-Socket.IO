@@ -1,0 +1,6 @@
+[
+  { "name": "default", "active": true, "format": "Default" },
+  { "name": "OPD", "active": true, "format": "HistoryAndPhysical" },
+  { "name": "OR", "active": true, "format": "OperativeNote" },
+  { "name": "not use", "active": false, "format": "OperativeNote" }
+]
