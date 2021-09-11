@@ -160,7 +160,7 @@ function BindSIO(optionBindSIO, optionSIO) {
 }
 
 
-const restClient = new (require('./Resume-REST-API-Connect'))();
+const restClient = new (require('resume-node-rest-connector').HttpClient)();
 
 /**
  * @callback SIOOnConnectionFunction
