@@ -267,7 +267,7 @@ class ResumeChild extends AbstractResume {
             console.log("Add blob to queue" + info)
             this._waitBlobs.push([blob, info]);
         } else if (this._waitBlobs.length <= 0) {
-            console.log('Emit stream..' + this.sessionId + '::' + info._id + '; size=' + (blob ? (blob.size / 1024) : null) + 'KB :: Cookie: ' + this._cookies);
+            console.log('Emit stream... ', this.sessionId, "\nCount ID: ", info._id, "\nsize = ", (blob ? (blob.size / 1024) : null), ' KB\nCookie: ', this._cookies);
             socket.emit(SS_AUDIO_STREAM, blob, info, this.sessionId, this.sectionID, this._cookies);
         }
         if (blob) {
@@ -335,7 +335,7 @@ class ResumeChild extends AbstractResume {
                 this._pushBlob(blob.slice(this.sentBlobSize), true, userTranscript);
             else
                 this._pushBlob(null, true, userTranscript);
-            console.log('Stop recording');
+            console.log("Stop recording....\nTotal sound chunk: ", this._sentBlobCount, "\nTotal Size: ", (this.sentBlobSize / (1 << 20)), ' MB');
             //keep SessionID and sectionID to receive some callback
             //this.sectionID = null;
 
