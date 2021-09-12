@@ -287,7 +287,8 @@ class ResumeChild extends AbstractResume {
                     wB.splice(0, 1); // drop first
                 });
             } else {
-                setTimeout(this._pushWaitBlob(), 900);
+                let _this = this;
+                setTimeout(() => _this._pushWaitBlob(), 900);
             }
         }
     }
