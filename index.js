@@ -216,8 +216,14 @@ function SIOOnConnection(optionSIO) {
                 console.log('Received data:', JSON.stringify(data));
                 socket.emit(SS_RESP_TRNSCR, data, data.is_end);
                 _last_update = data.update || (Date.now() / 1000);
-                if (!(data.is_end || is_end))
+                if (!(data.is_end || is_end)) {
                     updateTimeout(sessionId, sectionID, _last_update, cookies);
+
+                    if (restClient.onApiPushResult && (sessionId in restClient.onApiPushResult))
+                        // Remove callback
+                        delete restClient.onApiPushResult[res.data.session_id];
+
+                }
             }
             else {
                 console.log('REST API send message, but client closed:', JSON.stringify(data));
@@ -304,15 +310,19 @@ function SIOOnConnection(optionSIO) {
 
             });
 
-            /*
-            // Plan add if websocket is available.
             pCreate.then((res) => {
-                if(restClient.hasOwnProperty('onApiPushResult'))
-                    restClient.onApiPushResult[res.data.session_id] = (data)=>{
+                if (typeof restClient.onApiPushResult != 'undefined') {
+                    if (!restClient.onApiPushResult)
+                        // Create object if null
+                        restClient.onApiPushResult = {};
+
+                    // Assign callback for Session
+                    restClient.onApiPushResult[res.data.session_id] = (data) => {
                         // same to updateResult call back
+                        serverResponse(res.data.session_id, sectionID, res.cookies, data);
                     }
+                }
             });
-            */
             pCreate.catch(err => {
                 if ((typeof retryCallback) == 'function')
                     retryCallback();
