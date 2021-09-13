@@ -170,7 +170,39 @@ Please Create Socket.IO Server object, then [attach Resume](#attaching-to-existi
 - [Behind a reverse proxy](https://socket.io/docs/v4/reverse-proxy/)
 - [Usage with PM2](https://socket.io/docs/v4/pm2/)
 - [Using multiple nodes](https://socket.io/docs/v4/using-multiple-nodes/)
+- [Socket.IO Adapter](https://socket.io/docs/v4/adapter/)
 
+
+For example, run [PM2](https://socket.io/docs/v4/pm2/) with [Redis Adapter](https://socket.io/docs/v4/redis-adapter/)
+```JS
+// Use Redis Adapter      https://socket.io/docs/v4/redis-adapter/
+// insted of Cluster Adapter in Socket.IO guide         https://socket.io/docs/v4/pm2/
+// sio.adapter(require("@socket.io/cluster-adapter").createAdapter()); // Not used this
+
+/* Connect to Redis */
+const pubClient = require('redis').createClient({
+    host: REDIS_HOST,
+    port: REDIS_PORT,
+    password: REDIS_PW
+});
+
+pubClient.on('error', function (err) {
+    console.error('Could not establish a connection with Redis for Socket.IO session ' + err);
+    throw err;
+});
+
+pubClient.on('connect', function () {
+    console.log('Connected to redis successfully');
+});
+
+const subClient = pubClient.duplicate();
+
+/* Apply Redis Adapter */
+io.adapter(require('@socket.io/redis-adapter').createAdapter(pubClient, subClient));
+
+/* Apply PM2 session stickyness */
+require("@socket.io/sticky").setupWorker(io);
+```
 <br>
 
 ## More Information
