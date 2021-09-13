@@ -1,213 +1,183 @@
 # Guide for Node.js Server
+- [Guide for Node.js Server](#guide-for-nodejs-server)
+  - [TL; DR](#tl-dr)
+  - [Resume API Credentials](#resume-api-credentials)
+    - [Place credentials file](#place-credentials-file)
+    - [Pass credentials as environmental variables](#pass-credentials-as-environmental-variables)
+  - [Start Resume Socket.IO Server](#start-resume-socketio-server)
+    - [Standalone](#standalone)
+    - [Attaching to existing HTTP server](#attaching-to-existing-http-server)
+    - [Attaching to existing Socket.IO](#attaching-to-existing-socketio)
+      - [Automatic binding](#automatic-binding)
+      - [Manual callback binding by SIOOnConnection](#manual-callback-binding-by-sioonconnection)
+  - [Run Across Multiple clusters or Behind reverse proxy](#run-across-multiple-clusters-or-behind-reverse-proxy)
+  - [More Information](#more-information)
+
+## TL; DR
+
+Resume Socket.IO consists of Resume API Client for Node.JS and Socket.IO
 
 
-## Resume-Socket-IO-Server
+## Resume API Credentials
+For Resume API authenication
+### Place credentials file
+You can place `credentials.js` file from **Resume Administration System** in server root folder. The `config.js` of `Resume REST API Connector` will parse it when server starts.  
+<br>
+Example content in `credentials.js
+```JSON
+{
+  "host": "https://resume.sati.co.th",
+  "username": "USERNAME",
+  "password": "PASSWORD",
+  "section_id_default": 0
+}
+```
+<br>
 
-* [Resume-Socket-IO-Server](#module_Resume-Socket-IO-Server)  
-    * [\~OptionSIO](#module_Resume-Socket-IO-Server..OptionSIO)
-        * [new OptionSIO([resumeApiClient], [onConnectionCallback], [onDisconnectCallback], [onNewTranscriptSessionSyncCheck], [onNewTranscriptSessionCallback], [onReceivedTranscriptionSessionID], [onEndTranscriptSessionCallback], [onReceivedEndTranscriptSessionCallback], [onReceivedSoundCallback])](#new_module_Resume-Socket-IO-Server..OptionSIO_new)
-    * [\~OptionBindSIO](#module_Resume-Socket-IO-Server..OptionBindSIO)
-        * [new OptionBindSIO([server], [io], [nameSpace], [ioOptions], [port])](#new_module_Resume-Socket-IO-Server..OptionBindSIO_new)
-    * [\~newResumeSessionSyncCheck(socket)](#module_Resume-Socket-IO-Server..newResumeSessionSyncCheck) ⇒ <code>Boolean</code>
-    * [\~BindSIO(optionBindSIO, optionSIO)](#module_Resume-Socket-IO-Server..BindSIO) ⇒ <code>socket.io\~Server</code>
-    * [\~staticJsDir()](#module_Resume-Socket-IO-Server..staticJsDir) ⇒ <code>string</code>
-    * [\~staticJsFiles()](#module_Resume-Socket-IO-Server..staticJsFiles) ⇒ <code>Array.&lt;string&gt;</code>
-    * [\~SIOOnConnection(optionSIO)](#module_Resume-Socket-IO-Server..SIOOnConnection) ⇒ <code>SIOOnConnectionFunction</code>
-    * [\~ParamSessionID](#module_Resume-Socket-IO-Server..ParamSessionID) : <code>Object</code>
-    * [\~socketSIOOnConnection](#module_Resume-Socket-IO-Server..socketSIOOnConnection) : <code>function</code>
-    * [\~sessionSIOOnConnection](#module_Resume-Socket-IO-Server..sessionSIOOnConnection) : <code>function</code>
-    * [\~receivedEndTranscriptSessionCallback](#module_Resume-Socket-IO-Server..receivedEndTranscriptSessionCallback) : <code>function</code>
-    * [\~endTranscriptSessionCallback](#module_Resume-Socket-IO-Server..endTranscriptSessionCallback) : <code>function</code>
-    * [\~receivedSoundCallback](#module_Resume-Socket-IO-Server..receivedSoundCallback) : <code>function</code>
-    * [\~SIOOnConnectionFunction](#module_Resume-Socket-IO-Server..SIOOnConnectionFunction) : <code>function</code>
+### Pass credentials as environmental variables
+You can also specified Authenication information for Resume API via environmental variable. This method suits for Docker Container development. Please see [Environment variables in Compose](https://docs.docker.com/compose/environment-variables/) for more details.  
+<br>
+Example of `docker-compose.yaml` for Resume Socket.IO container. 
 
-<a name="module_Resume-Socket-IO-Server..OptionSIO"></a>
+```yaml
+version: "3.4"
 
-### Resume-Socket-IO-Server\~OptionSIO
-**Kind**: inner class of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-<a name="new_module_Resume-Socket-IO-Server..OptionSIO_new"></a>
+services:
+  resume-demo:
+    # ...
 
-#### new OptionSIO([resumeApiClient], [onConnectionCallback], [onDisconnectCallback], [onNewTranscriptSessionSyncCheck], [onNewTranscriptSessionCallback], 
-[onReceivedTranscriptionSessionID], [onEndTranscriptSessionCallback], [onReceivedEndTranscriptSessionCallback], [onReceivedSoundCallback])
-OptionSIO class is the optional template for SIOOnConnection function
+    environment:
+      REST_HOST: https://resume.sati.co.th
+      REST_USER: USERNAME
+      REST_PW: PASSWORD
+    
+    # ...
+
+```
+  
+<br>  
+
+You can also place these secret in [&quot;.env&quot; file](https://docs.docker.com/compose/environment-variables/#the-env-file) as Docker suggestion.
+<br>  
+Example of `.env` for Resume Socket.IO container.  
+
+```ENV
+REST_HOST=https://resume.sati.co.th
+REST_USER=USERNAME
+REST_PW=PASSWORD
+REST_DEFAULT_SECTION=0
+REST_LANG=["th","en"]
+```
+
+<br>  
+
+## Start Resume Socket.IO Server
+
+### Standalone
+
+The function `BindSIO` automatically create and return [`Socket.IO Server`](https://socket.io/docs/v4/server-initialization/#Standalone) object.
+```JS
+var io = require('./Resume-Socket-IO-Server').BindSIO(/* optionBindSIO, optionSIO */);
+
+io.listen(/* your Socket.IO port */);
+
+```
+
+You can also pass Socket.IO port as [`optionBindSIO.port`](Resume-Socket-IO-Server.md#new_module_Resume-Socket-IO-Server..OptionBindSIO_new).  
+
+```JS
+var io = require('./Resume-Socket-IO-Server').BindSIO(
+    { port: 80 /* other optionBindSIO options here */ }
+    /*, your optionSIO */
+);
+```
+  
+<br>  
+
+### Attaching to existing HTTP server
+
+Resume Socket.IO Server supports [Node&apos;s HTTP, HTTPS, or HTTP/2 server](https://socket.io/docs/v4/server-initialization/#Attached-to-an-existing-HTTP-server) and web server packages like [Express](https://socket.io/docs/v4/server-initialization/#With-Express) or [Kao](https://socket.io/docs/v4/server-initialization/#With-Koa) as Socket.IO can support.  
+
+```JS
+const httpServer = require("http").createServer();
+const { BindSIO } = require('./Resume-Socket-IO-Server');
+
+/* ... */
+
+var io = BindSIO(
+    {
+        server: httpServer
+        /* other optionBindSIO options here */
+    }
+    /*, your optionSIO */
+);
+
+/* ... */
+
+httpServer.listen(3000);
+```
+[Socket.IO Server Documentation](https://socket.io/docs/v4/server-initialization/#Attached-to-an-existing-HTTP-server)
+
+  
+<br>
+
+### Attaching to existing Socket.IO
+
+#### Automatic binding
+Resume will bind as [`.on('connection')`](https://socket.io/docs/v4/server-api/#Event-connection) event callback and return your [`Socket.IO Server`](https://socket.io/docs/v4/server-api/#Server) object.  
+
+```JS
+// Existing Socket.IO Server
+const io = require("socket.io")(/* httpServer, options */);
+
+/* ... */
+
+require('./Resume-Socket-IO-Server').BindSIO(
+    {
+        io: io
+        /* other optionBindSIO options here */
+    }
+    /*, your optionSIO */
+);
+```
+  
+
+#### Manual callback binding by SIOOnConnection
+You can call [`SIOOnConnection(socket)`](Resume-Socket-IO-Server.md#module_Resume-Socket-IO-Server..SIOOnConnection) in [`.on('connection')`](https://socket.io/docs/v4/server-api/#Event-connection) callback.  
+
+```JS
+// Your existing Socket.IO Server
+const io = require("socket.io")(/* httpServer, options */);
+const { SIOOnConnection } = require('./Resume-Socket-IO-Server');
+
+/* ... */
+
+io.on("connection", socket => {
+    /* ... */
+    SIOOnConnection(/* optionSIO */);
+
+    /* ... */
+});
+```
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| [resumeApiClient] | <code>resume-node-rest-connector\~HttpClient</code> | Resume API Client object |
-| [onConnectionCallback] | <code>socketSIOOnConnection</code> | Callback when Socket.io on('connection') |
-| [onDisconnectCallback] | <code>socketSIOOnConnection</code> | Callback when Socket.io on('disconnection') |
-| [onNewTranscriptSessionSyncCheck] | <code>newResumeSessionSyncCheck</code> | function called when client request for new Resume Session to check the the session before send to Resume API - return true if valid |
-| [onNewTranscriptSessionCallback] | <code>sessionSIOOnConnection</code> | Callback when request for new Resume Session pass the onNewTranscriptSessionSyncCheck validation |
-| [onReceivedTranscriptionSessionID] | <code>sessionSIOOnConnection</code> | Callback when API response new Resume Session ID |
-| [onEndTranscriptSessionCallback] | <code>endTranscriptSessionCallback</code> | Callback when Resume.js client end the Resume session |
-| [onReceivedEndTranscriptSessionCallback] | <code>receivedEndTranscriptSessionCallback</code> | Callback Resume API response that the session ended |     
-| [onReceivedSoundCallback] | <code>receivedSoundCallback</code> | Callback when Resume Received sound chunk |
+<br>
 
-<a name="module_Resume-Socket-IO-Server..OptionBindSIO"></a>
+## Run Across Multiple clusters or Behind reverse proxy
 
-### Resume-Socket-IO-Server\~OptionBindSIO
-**Kind**: inner class of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-<a name="new_module_Resume-Socket-IO-Server..OptionBindSIO_new"></a>
+Please Create Socket.IO Server object, then [attach Resume](#attaching-to-existing-socketio), and follow these documentations.
+- [Attach Resume to existing Socket.IO](#attaching-to-existing-socketio)
+- [Behind a reverse proxy](https://socket.io/docs/v4/reverse-proxy/)
+- [Usage with PM2](https://socket.io/docs/v4/pm2/)
+- [Using multiple nodes](https://socket.io/docs/v4/using-multiple-nodes/)
 
-#### new OptionBindSIO([server], [io], [nameSpace], [ioOptions], [port])
-OptionBindSIO class is the optional template for BindSIO function
+<br>
 
-
-| Param | Type | Description |
-| --- | --- | --- |
-| [server] | <code>http</code> \| <code>https</code> \| <code>http2</code> | HTTP, HTTPS, or HTTP/2 server object |
-| [io] | <code>socket.io\~Server</code> | Socket.IO Server object  - const io = require("socket.io")(); |
-| [nameSpace] | <code>string</code> | optional namespace for Socket.IO |
-| [ioOptions] | <code>object</code> | option for create Socket.IO server if io is undefined. |
-| [port] | <code>int</code> | port for create Socket.IO server if io is undefined. |
-
-<a name="module_Resume-Socket-IO-Server..newResumeSessionSyncCheck"></a>
-
-### Resume-Socket-IO-Server\~newResumeSessionSyncCheck(socket) ⇒ <code>Boolean</code>
-The function called on new Session to check the Resume Session
-
-**Kind**: inner method of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-**Returns**: <code>Boolean</code> - return true if Socket Session connnection is Valid
-
-| Param | Type | Description |
-| --- | --- | --- |
-| socket | <code>socket.io\~Socket</code> | Socket.IO socket parameter from io.on("connection", (socket) => {   }); |
-
-<a name="module_Resume-Socket-IO-Server..BindSIO"></a>
-
-### Resume-Socket-IO-Server\~BindSIO(optionBindSIO, optionSIO) ⇒ <code>socket.io\~Server</code>
-Bind Resume Server-sided script to Socket.IO as optionBindSIO.nameSpace or root. If optionBindSIO.io is defined the function binds to io directly. Else if 
-optionBindSIO.server is given, the function creates Socket.IO server and attaches to the server. Else, the function creates Socket.IO by given ports or optionBindSIO.ioOptions.
-
-**Kind**: inner method of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-**Summary**: Bind Resume Server-sided script to Socket.IO as optionBindSIO.nameSpace or root.
-**Returns**: <code>socket.io\~Server</code> - Socket.IO Server object
-
-| Param | Type | Description |
-| --- | --- | --- |
-| optionBindSIO | <code>OptionBindSIO</code> | Option for server binding |
-| optionSIO | <code>OptionSIO</code> | option for Resume server-sided script. |
-
-<a name="module_Resume-Socket-IO-Server..staticJsDir"></a>
-
-### Resume-Socket-IO-Server\~staticJsDir() ⇒ <code>string</code>
-Get path of static JavaScript Directory of Resume.js and its dependencies
-
-**Kind**: inner method of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-**Returns**: <code>string</code> - path to static JavaScript files
-<a name="module_Resume-Socket-IO-Server..staticJsFiles"></a>
-
-### Resume-Socket-IO-Server\~staticJsFiles() ⇒ <code>Array.&lt;string&gt;</code>
-Get array of path of static JavaScript files of Resume.js and its dependencies
-
-**Kind**: inner method of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-**Returns**: <code>Array.&lt;string&gt;</code> - array of path of static files in JavaScript directory
-<a name="module_Resume-Socket-IO-Server..SIOOnConnection"></a>
-
-### Resume-Socket-IO-Server\~SIOOnConnection(optionSIO) ⇒ <code>SIOOnConnectionFunction</code>
-Generate Resume Server-sided Callback for io.on('connection')
-
-**Kind**: inner method of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-**Returns**: <code>SIOOnConnectionFunction</code> - function for  io.on('connection')
-
-| Param | Type | Description |
-| --- | --- | --- |
-| optionSIO | <code>OptionSIO</code> | option for Resume server-sided script. |
-
-<a name="module_Resume-Socket-IO-Server..ParamSessionID"></a>
-
-### Resume-Socket-IO-Server\~ParamSessionID : <code>Object</code>
-The parameters of new session id event
-
-**Kind**: inner typedef of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| socket | <code>socket.io\~Socket</code> | Socket.IO from io.on("connection", (socket) => {   }); |
-| [sessionID] | <code>string</code> | Resume SessionID |
-| [pseudoIdentifier] | <code>string</code> | fake (pseudo) identifier generated by Resume REST API Client and sent to server |
-| identifier | <code>\*</code> | the object of identification data of patients given from ResumeOne().newSession(...) - (Transaction number, Visit number, Admission number, Hospital number) and healthcare workers (for researching or other purposes of each organization). This data will store (in local not sent outside private network. |
-| sectionId | <code>int</code> \| <code>string</code> | ID of section e.g. department number, section of organization name, given from ResumeOne().newSession(...) |
-| lang | <code>Array.&lt;string&gt;</code> | language hints given from ResumeOne().newSession(...) must be BCP-47 language code in string type or array of string type ordered by highest priority to suggest the speech-to-text API - the default is located in ./public/lang.json . See more detail of [BCP-47](https://github.com/libyal/libfwnt/wiki/Language-Code-identifiers) |
-| docFormat | <code>string</code> | Format of document given from ResumeOne().newSession(...) to let the speech-to-text API to generate returned data - reference the name from "C-CDA 1.1.0 on FHIR" otherwise will be "Default". Please read [README.md](../README.md) and http://hl7.org/fhir/us/ccda/artifacts.html |
-| multiSpeaker | <code>Boolean</code> | mode of transcription automatically given from ResumeOne().newSession(...) |
-| userStartTime | <code>Date</code> | session starting datetime automatically given from ResumeOne().newSession(...) |
-
-<a name="module_Resume-Socket-IO-Server..socketSIOOnConnection"></a>
-
-### Resume-Socket-IO-Server\~socketSIOOnConnection : <code>function</code>
-The Socket.IO SIOOnConnection callback
-
-**Kind**: inner typedef of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-
-| Param | Type | Description |
-| --- | --- | --- |
-| socket | <code>socket.io\~Socket</code> | Socket.IO socket parameter from io.on("connection", (socket) => {   }); |
-
-<a name="module_Resume-Socket-IO-Server..sessionSIOOnConnection"></a>
-
-### Resume-Socket-IO-Server\~sessionSIOOnConnection : <code>function</code>
-The Resume Session SIOOnConnection callback
-
-**Kind**: inner typedef of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-
-| Param | Type | Description |
-| --- | --- | --- |
-| paramSessionID | <code>ParamSessionID</code> | ParamSessionID |
-
-<a name="module_Resume-Socket-IO-Server..receivedEndTranscriptSessionCallback"></a>
-
-### Resume-Socket-IO-Server\~receivedEndTranscriptSessionCallback : <code>function</code>
-The callback Resume API response that the session ended
-
-**Kind**: inner typedef of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-
-| Param | Type | Description |
-| --- | --- | --- |
-| socket | <code>socket.io\~Socket</code> | Socket.IO socket parameter from io.on("connection", (socket) => {   }); |
-| sessionID | <code>string</code> | Resume SessionID |
-| sectionId | <code>int</code> \| <code>string</code> | ID of section e.g. department number, section of organization name, given from ResumeOne().newSession(...) |
-| transcript | <code>resume-node-rest-connector\~Transcript</code> | Transcript response of sent sound from Resume API |
-
-<a name="module_Resume-Socket-IO-Server..endTranscriptSessionCallback"></a>
-
-### Resume-Socket-IO-Server\~endTranscriptSessionCallback : <code>function</code>
-The callback Resume API response that the session ended
-
-**Kind**: inner typedef of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-
-| Param | Type | Description |
-| --- | --- | --- |
-| socket | <code>Socket</code> | Socket.IO socket parameter from io.on("connection", (socket) => {   }); |
-| sessionID | <code>string</code> | Resume SessionID |
-| sectionId | <code>int</code> \| <code>string</code> | ID of section e.g. department number, section of organization name, given from ResumeOne().newSession(...) |
-| info | <code>resume-node-rest-connector\~ResumeSoundInfo</code> | Information from Resume.js client to sent to Resume API |
-
-<a name="module_Resume-Socket-IO-Server..receivedSoundCallback"></a>
-
-### Resume-Socket-IO-Server\~receivedSoundCallback : <code>function</code>
-The callback when Resume Received sound chunk
-
-**Kind**: inner typedef of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-
-| Param | Type | Description |
-| --- | --- | --- |
-| socket | <code>Socket</code> | Socket.IO socket parameter from io.on("connection", (socket) => {   }); |
-| sessionID | <code>string</code> | Resume SessionID |
-| sectionId | <code>int</code> \| <code>string</code> | ID of section e.g. department number, section of organization name, given from ResumeOne().newSession(...) |
-| [blob] | <code>Blob</code> | Blob object of sound chunk from Resume.js |
-| info | <code>resume-node-rest-connector\~ResumeSoundInfo</code> | Information from Resume.js client to sent to Resume API |
-
-<a name="module_Resume-Socket-IO-Server..SIOOnConnectionFunction"></a>
-
-### Resume-Socket-IO-Server\~SIOOnConnectionFunction : <code>function</code>
-**Kind**: inner typedef of [<code>Resume-Socket-IO-Server</code>](#module_Resume-Socket-IO-Server)
-
-| Param | Type | Description |
-| --- | --- | --- |
-| socket | <code>Socket</code> | Socket.IO socket object |
-
+## More Information
+ - [Read me file](../README.md)
+ - [Quick Start Guide for Server-sided Node.JS](node.guide.md)
+ - [Quick Start Guide for Client-sided Resume.js](js.guide.md)
+ - [Resume Socket.IO Server](Resume-Socket-IO-Server.md)
+ - [Client-sided Resume.js](Resume.js.md)
 
 &copy; 2021 - copyright by Tanapat Kahabodeekanokkul - the founder of [Resume](https://sati.co.th).
