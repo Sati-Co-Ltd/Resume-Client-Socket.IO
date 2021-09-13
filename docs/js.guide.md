@@ -3,7 +3,8 @@
 - [Guide for Javascript and Node.js Client](#guide-for-javascript-and-nodejs-client)
   - [**_Important!_** Provide JavaScript for HTML <a name="prepare"></a>](#important-provide-javascript-for-html-)
     - [Direct copy &amp; paste to your `./js/` path](#direct-copy--paste-to-your-js-path)
-  - [Conclusion of different](#conclusion-of-different)
+    - [Include from Resume CDN](#include-from-resume-cdn)
+  - [Differences between Resume Transcription Mode](#differences-between-resume-transcription-mode)
   - [Conversation Mode](#conversation-mode)
     - [Prepare HTML page for script <a name="prepare"></a>](#prepare-html-page-for-script-)
     - [Write essential callbacks <a name="conv-call"></a>](#write-essential-callbacks-)
@@ -37,30 +38,57 @@ Please include JS files to HTML. They locate in `node_modules/resume-client-sock
 
 ### Direct copy &amp; paste to your `./js/` path
 
+JavaScript files locate in `node_modules/resume-client-socket.io/public/`. You can provide them by copy &amp; paste to your front-end HTML.
+
 ```HTML
 <head>
-    <!-- Other tags -->
+    <!-- ... -->
 
-    <script src="./js/jquery.min.js"></script>
+    <!-- Socket.IO Client -->
     <script src="/socket.io/socket.io.js"></script>
+    <!-- Resume and jQuery -->
+    <script src="./js/jquery.min.js"></script>
     <script src="./js/Resume.js"></script>
 
-    <!-- more other tags -->
+    <!-- ... -->
 </head>
 <body>
-    <!-- Other tags -->
+    <!-- ... -->
 
+    <!-- RecordRTC -->
     <script src="./js/RecordRTC.min.js"></script>
-    <!-- Your script here -->
+    <!-- ... -->
+</body>
+```
+
+### Include from Resume CDN
+
+***Note:*** NOT recommend for local network use, if you are not sure that your firewall allows outbound HTTP(S) request.
+  
+```HTML
+<head>
+    <!-- ... -->
+
+    <!-- Socket.IO Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- You can use jQuery CDN. (https://code.jquery.com/) -->
+    <script src="//cdn.sati.co.th/resume-client-socketio/jquery.min.js"></script>
+    <!-- Resume -->
+    <script src="//cdn.sati.co.th/resume-client-socketio/Resume.js"></script>
+
+    <!-- ... -->
+</head>
+<body>
+    <!-- ... -->
+
+    <!-- RecordRTC -->
+    <script src="//cdn.sati.co.th/resume-client-socketio/RecordRTC.min.js"></script>
+    <!-- ... -->
 </body>
 ```
 
 
-  
-
-
-
-## Conclusion of different
+## Differences between Resume Transcription Mode
 
 | Part | Conversation Mode | Dictation Mode | Combination Mode |
 | ---- | ---- | ---- | ---- |
