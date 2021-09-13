@@ -2,7 +2,9 @@
 
 - [Guide for Javascript and Node.js Client](#guide-for-javascript-and-nodejs-client)
   - [**_Important!_** Provide JavaScript for HTML <a name="prepare"></a>](#important-provide-javascript-for-html-)
-    - [Direct copy &amp; paste to your `./js/` path](#direct-copy--paste-to-your-js-path)
+    - [Directly copy &amp; paste to your `./js/` path](#directly-copy--paste-to-your-js-path)
+      - [Location of these files](#location-of-these-files)
+      - [Resume CDN Files](#resume-cdn-files)
     - [Include from Resume CDN](#include-from-resume-cdn)
     - [Router your HTTP server to JS path or files](#router-your-http-server-to-js-path-or-files)
   - [Differences between Resume Transcription Mode](#differences-between-resume-transcription-mode)
@@ -29,16 +31,26 @@
     - [Update the Result](#update-the-result-1)
   - [More Information](#more-information)
    
+
 ## **_Important!_** Provide JavaScript for HTML <a name="prepare"></a>
 
 
-`ResumeOne` requires [RecordRTC](https://github.com/muaz-khan/RecordRTC) to control microphone, [Socket.IO](https://socket.io/) to connect with server and [jQuery](https://jquery.com/) if you want to use [`ResumeOne.loadSectionList()`](public/js/Resume.js) method.
+`ResumeOne` requires [RecordRTC](https://github.com/muaz-khan/RecordRTC) to control microphone, [Socket.IO](https://socket.io/) to connect with server, and [jQuery](https://jquery.com/) if you want to use [`ResumeOne.loadSectionList()`](public/js/Resume.js) method.  
 
-Please include JS files to HTML. They locate in `node_modules/resume-client-socket.io/public/`. You can provide them by copy &amp; paste to your frontend, use public Resume CDN *(not recommend for intranet use)*, or route HTTP server to their directory.
+### Directly copy &amp; paste to your `./js/` path
 
-### Direct copy &amp; paste to your `./js/` path
+#### Location of these files
+- [NPM package](https://www.npmjs.com/package/resume-client-socket.io): `node_modules/resume-client-socket.io/public/`
+- [GitHub](https://github.com/pahntanapat/Resume-Client-Socket.IO): [https://github.com/pahntanapat/Resume-Client-Socket.IO/tree/main/public/js](https://github.com/pahntanapat/Resume-Client-Socket.IO/tree/main/public/js)
+- [Resume CDN](#resume-cdn-files): direct download file from CDN and copy to your directory.
 
-JavaScript files locate in `node_modules/resume-client-socket.io/public/`. You can provide them by copy &amp; paste to your front-end HTML.
+#### Resume CDN Files
+- [adapter.js](https://cdn.sati.co.th/resume-client-socketio/adapter.js)
+- [jquery.min.js](https://cdn.sati.co.th/resume-client-socketio/jquery.min.js)
+- [RecordRTC.min.js](https://cdn.sati.co.th/resume-client-socketio/RecordRTC.min.js)
+- [Resume.js](https://cdn.sati.co.th/resume-client-socketio/Resume.js)
+
+You can provide them by copy &amp; paste to your front-end HTML.
 
 ```HTML
 <head>
@@ -61,9 +73,9 @@ JavaScript files locate in `node_modules/resume-client-socket.io/public/`. You c
 </body>
 ```
 
-### Include from Resume CDN
+### Include from Resume CDN 
 
-***Note:*** NOT recommend for local network use, if you are not sure that your firewall allows outbound HTTP(S) request.
+***Note:*** NOT recommend for local network use, if you are not sure that your clients are able to reach external HTTP(S) files.
   
 ```HTML
 <head>
