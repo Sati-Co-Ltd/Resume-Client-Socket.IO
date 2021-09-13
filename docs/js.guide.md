@@ -19,7 +19,7 @@
     - [Start new session for recording <a name="dict-start"></a>](#start-new-session-for-recording-)
     - [Pause, Resume  and Stop recording and End session <a name="dict-control"></a>](#pause-resume--and-stop-recording-and-end-session-)
     - [Update the Result  <a name="dict-update"></a>](#update-the-result--)
-  - [Combinatory Conversation-Dictation Mode](#combinatory-conversation-dictation-mode)
+  - [Combination Conversation-Dictation Mode](#combination-conversation-dictation-mode)
     - [Prepare HTML page for script](#prepare-html-page-for-script-1)
     - [Write essential callbacks](#write-essential-callbacks)
     - [Create `Socket.IO` client and `ResumeOne` object](#create-socketio-client-and-resumeone-object)
@@ -62,13 +62,13 @@ Please include JS files to HTML. They locate in `node_modules/resume-client-sock
 
 ## Conclusion of different
 
-| Part                                                                                                                                                                                                   | Conversation Mode                                                        | Dictation Mode                                                                                                | Combinatory Mode                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Prepare HTML page for script**                                                                                                                                                                       | [All are same.](#prepare)                                                | [All are same.](#prepare)                                                                                     | [All are same.](#prepare)                  |
-| **Object callbacks and get updated [`transcript` result](Resume.js.md#Transcript)**                                                                                                                    | have only [`MlGroupTxt`](Resume.js.md#GroupText) - [details](#conv-call) | both [`MlGroupTxt`](Resume.js.md#GroupText) and [`TagRawTxt`](Resume.js.md#GroupText) - [details](#dict-call) | same to [Dictation Mode](#dict-call)       |
-| **Value of [`multiSpeaker` key](Resume.js.md#RESUME_DEFAULT_OPTION) of [`resumeOption` argument](Resume.js.md#new-resumeonesocket-resumeoption) in [`ResumeOne`](Resume.js.md#ResumeOne) constructor** | [`true`](#conv-create)                                                   | ***[`false`](#dict-create)***                                                                                 | [`true`](#conv-create)                     |
-| **Need to set [`tag` property](Resume.js.md#ResumeChild) before start and change input field**                                                                                                         | No                                                                       | Yes: [before start](#dict-start) and [change input form](#dict-control)                                       | Yes: same to [Dictation Mode](#dict-start) |
-| **Ending session**                                                                                                                                                                                     | Only if **[change patients or close windows](#end-sess)**                | same to [Conversation Mode](#end-sess)                                                                        | same to [Conversation Mode](#end-sess)     |
+| Part | Conversation Mode | Dictation Mode | Combination Mode |
+| ---- | ---- | ---- | ---- |
+| Prepare HTML page for script | [All are same.](#prepare) | [All are same.](#prepare) | [All are same.](#prepare) |
+| [`transcript` ](Resume.js.md#Transcript) result | contains [`MlGroupTxt`](Resume.js.md#GroupText) property - [details](#conv-call) | both [`MlGroupTxt`](Resume.js.md#GroupText) and [`TagRawTxt`](Resume.js.md#GroupText) - [details](#dict-call) | same to [Dictation Mode](#dict-call) |
+| [`multiSpeaker`](Resume.js.md#RESUME_DEFAULT_OPTION) propery of [`resumeOption`](Resume.js.md#new-resumeonesocket-resumeoption) argument in [`ResumeOne`](Resume.js.md#ResumeOne) constructor | [`true`](#conv-create) | ***[`false`](#dict-create)*** | [`true`](#conv-create) |
+| Need to set [`tag` property](Resume.js.md#ResumeChild) | No | Yes: [before start](#dict-start) and [change input form](#dict-control) | Yes: If you need [Dictation Mode](#dict-start), set to `null` if you switch back to [Conversation mode](#conversation-mode) |
+| Ending session | Only if **[change patients or close windows](#end-sess)** | same to [Conversation Mode](#end-sess) | same to [Conversation Mode](#end-sess) |
 
   
   <br/>
@@ -335,7 +335,7 @@ let response = resume.transcript;
 
 
 
-## Combinatory Conversation-Dictation Mode
+## Combination Conversation-Dictation Mode
 ### Prepare HTML page for script
 Same to [Conversation and Dictation Mode](#prepare)
 
