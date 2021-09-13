@@ -161,11 +161,7 @@ The Resume will listen to your conversation and rearrange into document format.
 ### Write essential callbacks <a name="conv-call"></a>
 Write callbacks for [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript) and [`onReceiveTranscript`](Resume.js.md#onReceiveTranscript)   
 
-The return object from [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript) should follow [the Name of "C-CDA 1.1.0 on FHIR resource profile"](../README.md#freq-doc). Also, the [`MlGroupTxt`](Resume.js.md#GroupText) key of [transcript](Resume.js.md#Transcript) argument of [`onReceiveTranscript`](Resume.js.md#onReceiveTranscript) is the object which keys' name follow the [Terminology of "C-CDA 1.1.0 on FHIR resource profile"](../README.md#freq-doc).  
-
-The [`MlGroupTxt`](Resume.js.md#GroupText) key contains array of formatted string - could be sentence or pharse (`["This is sentence one.","next pharse","It can be pharse or sentence.","..."]`). please read [Resume.js.md](Resume.js.md#GroupText) for more details.
-  
-For more information about ["C-CDA 1.1.0 on FHIR resource profile"](http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles), please see [README.md](../README.md#freq-doc).    
+The return object from [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript) should follow [the Name of "C-CDA 1.1.0 on FHIR resource profile"](../README.md#freq-doc). 
 
 ```JS
 function _getUserTranscribe () {
@@ -178,6 +174,14 @@ function _getUserTranscribe () {
         follow_up_section: this.FU
     };
 }
+```
+- The [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript) callback
+- The [`GroupTxt`](Resume.js.md#GroupText), return object from [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript)
+
+
+
+```JS
+
 function _onReceiveTranscript (transcript, isEnd) {
     log('Recieved Transcript.. ' + JSON.stringify(transcript));
     if (isEnd) {
@@ -194,6 +198,18 @@ function _onReceiveTranscript (transcript, isEnd) {
     }
 }
 ```
+
+In
+
+The [`MlGroupTxt`](Resume.js.md#GroupText) key of [transcript](Resume.js.md#Transcript) argument of [`onReceiveTranscript`](Resume.js.md#onReceiveTranscript) is the object which keys' name follow the [Terminology of "C-CDA 1.1.0 on FHIR resource profile"](../README.md#freq-doc).  
+ 
+ Its values could be sentence or pharse (`["This is sentence one.","next pharse","It can be pharse or sentence.","..."]`). please read [Resume.js.md](Resume.js.md#GroupText) for more details.
+
+  
+ - ["C-CDA 1.1.0 on FHIR resource profile"](http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles)
+ - [README.md](../README.md#freq-doc)
+ - [GroupText](Resume.js.md#GroupText)
+ - [transcript](Resume.js.md#Transcript)
   <br>
 
 ### Create `Socket.IO` client and `ResumeOne` object <a name="conv-create"></a>
