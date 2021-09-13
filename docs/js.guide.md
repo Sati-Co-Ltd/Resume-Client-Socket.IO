@@ -7,7 +7,6 @@
     - [Router your HTTP server to JS path or files](#router-your-http-server-to-js-path-or-files)
   - [Differences between Resume Transcription Mode](#differences-between-resume-transcription-mode)
   - [Conversation Mode](#conversation-mode)
-    - [Prepare HTML page for script <a name="prepare"></a>](#prepare-html-page-for-script-)
     - [Write essential callbacks <a name="conv-call"></a>](#write-essential-callbacks-)
     - [Create `Socket.IO` client and `ResumeOne` object <a name="conv-create"></a>](#create-socketio-client-and-resumeone-object-)
     - [Start new session for recording](#start-new-session-for-recording)
@@ -126,6 +125,8 @@ And include into your front-end HTML.
     <!-- ... -->
 </body>
 ```
+  <br>
+
 
 ## Differences between Resume Transcription Mode
 
@@ -143,28 +144,6 @@ And include into your front-end HTML.
 
 ## Conversation Mode
 The Resume will listen to your conversation and rearrange into document format.
-
-### Prepare HTML page for script <a name="prepare"></a>
-`ResumeOne` requires [RecordRTC](https://github.com/muaz-khan/RecordRTC) to control microphone, [Socket.IO](https://socket.io/) to connect with server and [jQuery](https://jquery.com/) if you want to use [`ResumeOne.loadSectionList()`](public/js/Resume.js) method.
-```HTML
-<head>
-    <!-- Other tags -->
-
-    <script src="./js/jquery.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="./js/Resume.js"></script>
-
-    <!-- more other tags -->
-</head>
-<body>
-    <!-- Other tags -->
-
-    <script src="./js/RecordRTC.min.js"></script>
-    <!-- Your script here -->
-</body>
-```
-
-
   
 
 ### Write essential callbacks <a name="conv-call"></a>
@@ -178,7 +157,7 @@ For more information about ["C-CDA 1.1.0 on FHIR resource profile"](http://hl7.o
 
 ```JS
 function _getUserTranscribe () {
-    // this format follows C-CDA, http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles  .
+    /* this format follows C-CDA, http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles . */
     return {
         chief_complaint_section: this.CC,
         history_of_present_illness_section: this.PI,
@@ -193,81 +172,101 @@ function _onReceiveTranscript (transcript, isEnd) {
         // Action when API stop session completely.
     }
     if (transcript.MlGroupTxt) {
-        // The response will have keys like the Terminology of "C-CDA 1.1.0 on FHIR resource profile".
+        /* The response will have keys like the Terminology of "C-CDA 1.1.0 on FHIR resource profile". */
         rPI = transcript.MlGroupTxt.history_of_present_illness_section;
-        // and more field rPHx = transcript.MlGroupTxt.......
+        /* and more fields e.g. rPHx = transcript.MlGroupTxt */
 
         rPI.push(...transcript.TagRawTxt.other);
-        // More code here
-        ////
+        /* ... */
 
     }
 }
 ```
-
+  <br>
 
 ### Create `Socket.IO` client and `ResumeOne` object <a name="conv-create"></a>
 Place [`ResumeOne`](Resume.js.md#ResumeOne) object construction in callback after loading page. The [`resumeOption`](Resume.js.md#new-resumeonesocket-resumeoption) argument should follow [`RESUME_DEFAULT_OPTION`](Resume.js.md#RESUME_DEFAULT_OPTION) object.
+  
+If you use Socket.IO server from different Domain or Path, Please follow [Socket.IO client guide](https://socket.io/docs/v4/client-initialization/#From-a-different-domain).
 
 ```JS
 var socket = io();
 
-//// If you use Socket.IO server from different Domain or Path,
-//// Please check out  https://socket.io/docs/v4/client-initialization/#From-a-different-domain .
+/* 
+    If you use Socket.IO server from different Domain or Path,
+    Please check out  https://socket.io/docs/v4/client-initialization/#From-a-different-domain .
+*/
 
-///
-/// in completely loaded callback
+/* object construction with callbacks */
 var resume = new ResumeOne(socket,
     {
         getIntermediateUserTranscript: _getUserTranscribe,  // from above
         onReceiveTranscript: this._onReceiveTranscript,   // from above
-        multiSpeaker: true   // this is conversation Mode!
+        multiSpeaker: true   // true = conversation Mode
     });
 ```
-  
+  <br>
 
 ### Start new session for recording
-When user trigers start event, the [`ResumeOne.newSession`](Resume.js.md#resumeonenewsessionhint-identifier-sectionid-docformat-langsuggest) will obtain new Session ID from `Resume API`, concurrently  initiate [microphone recorder](Resume.js.md#ResumeRecorder).
-```JS
-// under start callback
-resume.newSession(Hint,
-    { HN: HN, TXN: TXN, Practioner: Practioner, Location:Location }, // Patient and Healthcare worker identifier for sending to local logging server, Not send to Resume API publically.
-    sectionID, // Section to logging on Resume usage DB
-    sectionFormat  // Document format  must follows C-CDA. Please see README.md and Resume.js.md documentation
-);
-/// Other code here..
-log('Recording...');
-```
+When user trigers start event, the [`ResumeOne.newSession`](Resume.js.md#resumeonenewsessionhint-identifier-sectionid-docformat-langsuggest) will obtain new Session ID from `Resume API`, concurrently initiates [microphone recorder](Resume.js.md#ResumeRecorder).
 
+Provided identifier will pass to Resume server-sided callbacks - [sessionSIOOnConnection and onNewTranscriptSessionSyncCheck](#module_Resume-Socket-IO-Server..OptionSIO). Resume don&apos;t send it to Resume API.
+
+```JS
+/* Patient and Healthcare worker identifier for sending to local logging server, Not send to Resume API publically. */
+let identifier = { HN: HN, TXN: TXN, Practioner: Practioner, Location:Location };
+
+/* Document format  must follows C-CDA. Please see README.md and Resume.js.md documentation. */
+let sectionFormat = "HistoryAndPhysical";
+
+/* Section to logging on Resume usage DB */
+let sectionID = "OPD1";
+
+/* request for new session */
+resume.newSession(Hint,
+    identifier,
+    sectionID,
+    sectionFormat  
+);
+```
+[ResumeOne.newSession method](Resume.js.md#ResumeOne+newSession)
+
+  <br>
 
 ### Pause and Resume
 
 ```JS
 // to pause
 resume.pause();
+
 // to resume
 resume.resume();
 ```
-  
+
+  <br>
+
 ### Update the Result
-The [`ResumeOne`](Resume.js.md#ResumeOne) object automatically updates the `Resume API` response to client. It will call the [`onReceiveTranscript`](#conv-call). It also stores result in [`transcript` property](Resume.js.md#ResumeChild)
+The [`ResumeOne`](Resume.js.md#ResumeOne) object automatically updates the `Resume API` response to client. It will call the [`onReceiveTranscript`](#conv-call). It also stores result in [`transcript` property](Resume.js.md#ResumeChild).
 
 ```JS
-// Normally, ResumeOne always automatically calls onReceiveTranscript when recieved Resume API response.
-// If you prefer to get result from property, use this
+/* Normally, ResumeOne always automatically calls onReceiveTranscript when recieved Resume API response. */
+/* If you prefer to get result from property, */
 let response = resume.transcript;
 ```
+  <br>
+
 ### Stop recording and End session <a name="end-sess"></a>
 ***Warning!*** for better `Resume API` accuracy, please end session only if change the patients or close the page.
+
 ```JS
-resume.endSession(_getUserTranscribe()); //get final user transcript from function
-// Can be omitted like below,
-// resume.endSession();
-// if you provide `getIntermediateUserTranscript`
+let userForm = _getUserTranscribe(); /* Get user form data */
 
-//// Another code here
-log('Stopped recording.');
+resume.endSession(userForm);
+```
 
+The argument of `endSession` can be omitted, if you provide [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript).
+```JS
+resume.endSession();
 ```
   
 -------  
@@ -307,7 +306,7 @@ function _onReceiveTranscript (transcript, isEnd) {
                 rPI = transcript.MlGroupTxt.history_of_present_illness_section;
                 // .. and more rPHx = transcript.MlGroupTxt.....
 
-                // More code here
+                /* ... */
                 ////
 
                 if(transcript.TagRawTxt.other)
@@ -322,7 +321,7 @@ function _onReceiveTranscript (transcript, isEnd) {
                 tCC = transcript.TagRawTxt.chief_complaint_section;
                 tPI = transcript.TagRawTxt.history_of_present_illness_section;
                 
-                // More code here
+                /* ... */
                 /////
             }
         }
