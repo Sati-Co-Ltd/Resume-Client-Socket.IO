@@ -77,7 +77,7 @@ REST_LANG=["th","en"]
 
 The function `BindSIO` automatically create and return [`Socket.IO Server`](https://socket.io/docs/v4/server-initialization/#Standalone) object.
 ```JS
-var io = require('./Resume-Socket-IO-Server').BindSIO(/* optionBindSIO, optionSIO */);
+var io = require('resume-client-socket.io').BindSIO(/* optionBindSIO, optionSIO */);
 
 io.listen(/* your Socket.IO port */);
 
@@ -86,7 +86,7 @@ io.listen(/* your Socket.IO port */);
 You can also pass Socket.IO port as [`optionBindSIO.port`](Resume-Socket-IO-Server.md#new_module_Resume-Socket-IO-Server..OptionBindSIO_new).  
 
 ```JS
-var io = require('./Resume-Socket-IO-Server').BindSIO(
+var io = require('resume-client-socket.io').BindSIO(
     { port: 80 /* other optionBindSIO options here */ }
     /*, your optionSIO */
 );
@@ -100,7 +100,7 @@ Resume Socket.IO Server supports [Node&apos;s HTTP, HTTPS, or HTTP/2 server](htt
 
 ```JS
 const httpServer = require("http").createServer();
-const { BindSIO } = require('./Resume-Socket-IO-Server');
+const { BindSIO } = require('resume-client-socket.io');
 
 /* ... */
 
@@ -132,7 +132,7 @@ const io = require("socket.io")(/* httpServer, options */);
 
 /* ... */
 
-require('./Resume-Socket-IO-Server').BindSIO(
+require('resume-client-socket.io').BindSIO(
     {
         io: io
         /* other optionBindSIO options here */
@@ -148,7 +148,7 @@ You can call [`SIOOnConnection(socket)`](Resume-Socket-IO-Server.md#module_Resum
 ```JS
 // Your existing Socket.IO Server
 const io = require("socket.io")(/* httpServer, options */);
-const { SIOOnConnection } = require('./Resume-Socket-IO-Server');
+const { SIOOnConnection } = require('resume-client-socket.io');
 
 /* ... */
 

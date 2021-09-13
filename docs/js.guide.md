@@ -97,7 +97,7 @@ Example server in [Express](https://expressjs.com/)
 ```JS
 const express = require('express');
 const app = express();
-const { StaticJSDir } = require('./Resume-Socket-IO-Server');
+const { StaticJSDir } = require('resume-client-socket.io');
 /* ... */
 
 // Route the Resume Client Scripts' directory to /resume path
