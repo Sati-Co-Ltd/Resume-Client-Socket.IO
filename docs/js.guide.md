@@ -4,6 +4,7 @@
   - [**_Important!_** Provide JavaScript for HTML <a name="prepare"></a>](#important-provide-javascript-for-html-)
     - [Direct copy &amp; paste to your `./js/` path](#direct-copy--paste-to-your-js-path)
     - [Include from Resume CDN](#include-from-resume-cdn)
+    - [Router your HTTP server to JS path or files](#router-your-http-server-to-js-path-or-files)
   - [Differences between Resume Transcription Mode](#differences-between-resume-transcription-mode)
   - [Conversation Mode](#conversation-mode)
     - [Prepare HTML page for script <a name="prepare"></a>](#prepare-html-page-for-script-)
@@ -87,6 +88,44 @@ JavaScript files locate in `node_modules/resume-client-socket.io/public/`. You c
 </body>
 ```
 
+### Router your HTTP server to JS path or files
+
+The `StaticJSDir()` returns directory path of them. And the `StaticJSFiles()` gives array of JavaScript files.  
+You can set your server object to these paths.  
+
+Example server in [Express](https://expressjs.com/)
+```JS
+const express = require('express');
+const app = express();
+const { StaticJSDir } = require('./Resume-Socket-IO-Server');
+/* ... */
+
+// Route the Resume Client Scripts' directory to /resume path
+app.use('/resume', express.static(StaticJSDir()));
+
+```
+
+And include into your front-end HTML.
+```HTML
+<head>
+    <!-- ... -->
+
+    <!-- Socket.IO Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Resume and jQuery -->
+    <script src="/resume/jquery.min.js"></script>
+    <script src="/resume/Resume.js"></script>
+
+    <!-- ... -->
+</head>
+<body>
+    <!-- ... -->
+
+    <!-- RecordRTC -->
+    <script src="/resume/RecordRTC.min.js"></script>
+    <!-- ... -->
+</body>
+```
 
 ## Differences between Resume Transcription Mode
 
