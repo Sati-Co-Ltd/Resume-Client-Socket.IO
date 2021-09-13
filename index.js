@@ -44,7 +44,7 @@ const UPDATE_INTERVAL = 5000;
 /**
  * The function called on new Session to check the Resume Session
  * @function newResumeSessionSyncCheck
- * @param {socket.io~Socket} socket Socket.IO socket parameter from io.on("connection", (socket) => {   });
+ * @param {ParamSessionID} socket Socket.IO socket parameter from io.on("connection", (socket) => {   });
  * @returns {Boolean} return true if Socket Session connnection is Valid
  */
 
@@ -283,7 +283,16 @@ function SIOOnConnection(optionSIO) {
          */
         socket.on(EVENT_CLIENT_INIT, (sectionId, lang, hint, docFormat, multiSpeaker, identifier, userStartTime, retryCallback) => {
             if (optionSIO.onNewTranscriptSessionSyncCheck && ((typeof optionSIO.onNewTranscriptSessionSyncCheck) == 'function'))
-                if (!optionSIO.onNewTranscriptSessionSyncCheck(socket)) return false;
+                if (!optionSIO.onNewTranscriptSessionSyncCheck({
+                    socket: socket,
+                    identifier: identifier,
+                    sectionId: sectionId,
+                    lang: lang,
+                    hint: hint,
+                    docFormat: docFormat,
+                    multiSpeaker: multiSpeaker,
+                    userStartTime: userStartTime
+                })) return false;
 
             let pCreate = restClient.newSession(sectionId, lang || null, hint || null, docFormat || null, multiSpeaker || false, userStartTime);
             pCreate.then((res) => {
