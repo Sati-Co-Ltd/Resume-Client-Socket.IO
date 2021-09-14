@@ -2,8 +2,8 @@
 ["C-CDA 1.1.0 on FHIR resource profile"](http://www.hl7.org/fhir/us/ccda/artifacts.html)
 
 ## History and Physical Exam Document
-**Document Name:** HistoryAndPhysical
-**Section:**
+**Document Name or typedef:** HistoryAndPhysical
+**Section** or **Property**
 - allergies_and_intolerances_section
 - family_history_section
 - general_status_section
