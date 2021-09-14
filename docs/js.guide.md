@@ -145,12 +145,12 @@ We recommend you to assign function for [`getIntermediateUserTranscript`](Resume
 ### getIntermediateUserTranscript Function
 Resume.js will automatically calls [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript) when requests for user input to send to Resume API with sound chunk.
 
-The properties of object returned from [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript) should follow [the Name of "C-CDA 1.1.0 on FHIR resource profile"](../README.md#freq-doc). 
+The properties of object returned from [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript) should follow [the Property of "C-CDA 1.1.0 on FHIR resource profile"](CCDA.md). 
 
 ```JS
 /* Function */
 function _getUserTranscribe () {
-    /* this format follows C-CDA, http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles . */
+    /* this format follows C-CDA. */
     return {
         chief_complaint_section: this.CC,
         history_of_present_illness_section: this.PI,
@@ -165,7 +165,7 @@ function _getUserTranscribe () {
 
 ### onReceiveTranscript Callback
 The [`onReceiveTranscript`](Resume.js.md#onReceiveTranscript) callback will be triggered when result arrives. <br>  
-The [`MlGroupTxt`](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..GroupText) and [`TagRawTxt`](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..GroupText) in [transcript](Resume.js.md#Transcript) argument contains properties that follow [Terminologies of "C-CDA 1.1.0 on FHIR resource profile"](http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles).
+The [`MlGroupTxt`](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..GroupText) and [`TagRawTxt`](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..GroupText) in [transcript](Resume.js.md#Transcript) argument contains properties that follow [Terminologies of "C-CDA 1.1.0 on FHIR resource profile"](CCDA.md).
  
 Their values are string of sentence or pharse (`["This is sentence one.","Or pharse","It can be pharse or sentence.","..."]`). please read [[Resume-Node-REST-Connector](https://github.com/pahntanapat/Resume-Node-REST-Connector) for more details.
 
