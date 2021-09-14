@@ -22,8 +22,10 @@
       - [Start with Conversion transcription](#start-with-conversion-transcription)
     - [Start with Dictation transcription](#start-with-dictation-transcription)
   - [Start new session for recording](#start-new-session-for-recording)
-    - [Pause and Resume](#pause-and-resume)
-    - [Update the Result](#update-the-result)
+  - [Pause and Resume](#pause-and-resume)
+  - [Switch to other Form input (Form tag) in *Dictation Mode* and *Combination Mode*](#switch-to-other-form-input-form-tag-in-dictation-mode-and-combination-mode)
+  - [Switch to Conversation transcription in *Combination Mode*](#switch-to-conversation-transcription-in-combination-mode)
+  - [Update the Result](#update-the-result)
     - [Stop recording and End session <a name="end-sess"></a>](#stop-recording-and-end-session-)
   - [Dictation Mode <a name="dictate"></a>](#dictation-mode-)
     - [Prepare HTML page for script](#prepare-html-page-for-script)
@@ -216,7 +218,7 @@ function _onReceiveTranscript (transcript, isEnd) {
 }
 ```
   
- - ["C-CDA 1.1.0 on FHIR resource profile"](http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles)
+ - ["C-CDA 1.1.0 on FHIR resource profile"](CCDA.md)
  - [README.md](../README.md#freq-doc)
  - [GroupText](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..GroupText)
  - [transcript](Resume.js.md#Transcript)
@@ -268,7 +270,7 @@ var resume = new ResumeOne(socket,
 
 ### Example for Dictation Mode
 
-Set [`resumeOption.multiSpeaker = true`](Resume.js.md#new-resumeonesocket-resumeoption)
+Set [`resumeOption.multiSpeaker = false`](Resume.js.md#new-resumeonesocket-resumeoption)
 ```JS
 var resume = new ResumeOne(socket, 
     {
@@ -297,7 +299,7 @@ var resume = new ResumeOne(socket,
 
 ## Assign user input form to `ResumeOne.tag` before start recoring
 In Dictation Mode and Combination Mode.  <br>
-For good practice, `ResumeOne.tag` should follow 
+For good practice, [`ResumeOne.tag`](Resume.js.md#ResumeChild) should follow [section (property) name of C-CDA 1.1.0](CCDA.md).
 
 ### Conversation Mode
 *Not have this function*
@@ -324,13 +326,13 @@ resume.tag = "chief_complaint_section";
 ## Start new session for recording
 When user trigers start event, the [`ResumeOne.newSession`](Resume.js.md#resumeonenewsessionhint-identifier-sectionid-docformat-langsuggest) will obtain new Session ID from `Resume API`, concurrently initiates [microphone recorder](Resume.js.md#ResumeRecorder).
 
-Provided identifier will pass to Resume server-sided callbacks - [sessionSIOOnConnection and onNewTranscriptSessionSyncCheck](#module_Resume-Socket-IO-Server..OptionSIO). Resume don&apos;t send it to Resume API.
+Provided identifier will pass to Resume server-sided callbacks - [sessionSIOOnConnection and onNewTranscriptSessionSyncCheck](#module_Resume-Socket-IO-Server..OptionSIO). Resume.js doesn&apos;t send it to Resume API.
 
 ```JS
 /* Patient and Healthcare worker identifier for sending to local logging server, Not send to Resume API publically. */
 let identifier = { HN: HN, TXN: TXN, Practioner: Practioner, Location:Location };
 
-/* Document format  must follows C-CDA. Please see README.md and Resume.js.md documentation. */
+/* Document format  must follows C-CDA Document name. Please see README.md and CCDA.md documentation. */
 let sectionFormat = "HistoryAndPhysical";
 
 /* Section to logging on Resume usage DB */
@@ -347,7 +349,7 @@ resume.newSession(Hint,
 
   <br>
 
-### Pause and Resume
+## Pause and Resume
 
 ```JS
 // to pause
@@ -359,7 +361,31 @@ resume.resume();
 
   <br>
 
-### Update the Result
+## Switch to other Form input (Form tag) in *Dictation Mode* and *Combination Mode*
+
+**Please follow these steps**
+1. Pause the recording
+2. Assign name of form input to [`ResumeOne.tag`](Resume.js.md#ResumeChild)
+3. Resume record
+
+For good practice, [`ResumeOne.tag`](Resume.js.md#ResumeChild) should follow [section (property) name of C-CDA 1.1.0](CCDA.md).
+
+```JS
+// 1. pause
+resume.pause();
+
+// 2. set form tag
+resume.tag = "medications_section";
+
+// 3. resume
+resume.resume();
+```
+
+Please pause before change the [`ResumeOne.tag`](Resume.js.md#ResumeChild) and then resume the session, in order to prevent unreliable [transcription result](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..Transcript) during changing period.  
+
+## Switch to Conversation transcription in *Combination Mode*
+
+## Update the Result
 The [`ResumeOne`](Resume.js.md#ResumeOne) object automatically updates the `Resume API` response to client. It will call the [`onReceiveTranscript`](#conv-call). It also stores result in [`transcript` property](Resume.js.md#ResumeChild).
 
 ```JS
@@ -396,7 +422,7 @@ Write callbacks for [`getIntermediateUserTranscript`](Resume.js.md#getIntermedia
 
 **The different** point between [Dictation Mode](#dictate) and [Conversation Mode](#conv-call) is that the [transcript](Resume.js.md#Transcript) argument of [`onReceiveTranscript`](Resume.js.md#onReceiveTranscript) has **`MlGroupTxt` and `TagRawTxt` keys**. Both are the object which keys' name follow the [Terminology of "C-CDA 1.1.0 on FHIR resource profile"](../README.md#freq-doc).  
   
-For more information about ["C-CDA 1.1.0 on FHIR resource profile"](http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles), please see [README.md](../README.md#freq-doc).    
+For more information about ["C-CDA 1.1.0 on FHIR resource profile"](CCDA.md), please see [README.md](../README.md#freq-doc).    
 
 ```JS
 function _getUserTranscribe () {
