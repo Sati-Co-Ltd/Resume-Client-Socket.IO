@@ -426,7 +426,6 @@ resume.endSession();
 
 | Part | Conversation Mode | Dictation Mode | Combination Mode |
 | ---- | ---- | ---- | ---- |
-| Function | listen to conversation and rearrange into document format |
 | Prepare HTML page for script | [All are same.](#prepare) | [All are same.](#prepare) | [All are same.](#prepare) |
 | [`transcript` ](Resume.js.md#Transcript) result | contains [`MlGroupTxt`](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..GroupText) property - [details](#conv-call) | both [`MlGroupTxt`](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..GroupText) and [`TagRawTxt`](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..GroupText) - [details](#dict-call) | same to [Dictation Mode](#dict-call) |
 | [`resumeOption.multiSpeaker`](Resume.js.md#new-resumeonesocket-resumeoption) argument in [`ResumeOne`](Resume.js.md#ResumeOne) constructor | [`true`](#conv-create) | ***[`false`](#dict-create)*** | [`true`](#conv-create) |
