@@ -27,20 +27,6 @@
   - [Switch to Conversation transcription in *Combination Mode*](#switch-to-conversation-transcription-in-combination-mode)
   - [Update the Result](#update-the-result)
     - [Stop recording and End session <a name="end-sess"></a>](#stop-recording-and-end-session-)
-  - [Dictation Mode <a name="dictate"></a>](#dictation-mode-)
-    - [Prepare HTML page for script](#prepare-html-page-for-script)
-    - [Write essential callbacks <a name="dict-call"></a>](#write-essential-callbacks-)
-    - [Create `Socket.IO` client and `ResumeOne` object <a name="dict-create"></a>](#create-socketio-client-and-resumeone-object-)
-    - [Start new session for recording <a name="dict-start"></a>](#start-new-session-for-recording-)
-    - [Pause, Resume  and Stop recording and End session <a name="dict-control"></a>](#pause-resume--and-stop-recording-and-end-session-)
-    - [Update the Result  <a name="dict-update"></a>](#update-the-result--)
-  - [Combination Conversation-Dictation Mode](#combination-conversation-dictation-mode)
-    - [Prepare HTML page for script](#prepare-html-page-for-script-1)
-    - [Write essential callbacks](#write-essential-callbacks)
-    - [Create `Socket.IO` client and `ResumeOne` object](#create-socketio-client-and-resumeone-object)
-    - [Start new session for recording](#start-new-session-for-recording-1)
-    - [Pause, Resume  and Stop recording and End session](#pause-resume--and-stop-recording-and-end-session)
-    - [Update the Result](#update-the-result-1)
   - [Differences between Resume Transcription Mode](#differences-between-resume-transcription-mode)
   - [More Information](#more-information)
    
@@ -320,7 +306,7 @@ resume.tag = null;
 ### Start with Dictation transcription
 Same to [Dictation Mode](#dictation-mode)
 ```JS
-resume.tag = "chief_complaint_section";
+resume.tag = "history_of_present_illness_section";
 ```
 
 ## Start new session for recording
@@ -362,6 +348,7 @@ resume.resume();
   <br>
 
 ## Switch to other Form input (Form tag) in *Dictation Mode* and *Combination Mode*
+To switch to Form input (in *Dictation Mode* and *Combination Mode*), or switch from Conversation transcription to Dictation transcription in *Combination Mode*.  <br>
 
 **Please follow these steps**
 1. Pause the recording
@@ -385,8 +372,30 @@ Please pause before change the [`ResumeOne.tag`](Resume.js.md#ResumeChild) and t
 
 ## Switch to Conversation transcription in *Combination Mode*
 
+**Please follow these steps**
+1. Pause the recording
+2. Set [`ResumeOne.tag`](Resume.js.md#ResumeChild) to `null` or `undefined`
+3. Resume record
+
+For good practice, [`ResumeOne.tag`](Resume.js.md#ResumeChild) should follow [section (property) name of C-CDA 1.1.0](CCDA.md).
+
+```JS
+// 1. pause
+resume.pause();
+
+// 2. set form tag
+resume.tag = null;
+
+// 3. resume
+resume.resume();
+```
+
+Please pause before change the [`ResumeOne.tag`](Resume.js.md#ResumeChild) and then resume the session, in order to prevent unreliable [transcription result](https://github.com/pahntanapat/Resume-Node-REST-Connector/blob/main/docs/Resume-REST-API-Connect.md#module_Resume-REST-API-Connect..Transcript) during changing period.  
+  <br>
+
+
 ## Update the Result
-The [`ResumeOne`](Resume.js.md#ResumeOne) object automatically updates the `Resume API` response to client. It will call the [`onReceiveTranscript`](#conv-call). It also stores result in [`transcript` property](Resume.js.md#ResumeChild).
+The [`ResumeOne`](Resume.js.md#ResumeOne) object automatically updates the `Resume API` response to client. It will call the [onReceiveTranscript Callback](#onreceivetranscript-callback). It also stores result in [`transcript` property](Resume.js.md#ResumeChild).
 
 ```JS
 /* Normally, ResumeOne always automatically calls onReceiveTranscript when recieved Resume API response. */
@@ -404,7 +413,7 @@ let userForm = _getUserTranscribe(); /* Get user form data */
 resume.endSession(userForm);
 ```
 
-The argument of `endSession` can be omitted, if you provide [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript).
+The argument of `endSession` can be omitted, if you provide [getIntermediateUserTranscript Function](#getintermediateusertranscript-function).
 ```JS
 resume.endSession();
 ```
@@ -412,158 +421,6 @@ resume.endSession();
 -------  
 <br/>  
   
-## Dictation Mode <a name="dictate"></a>
-
-### Prepare HTML page for script
-As same as [Conversation Mode](#prepare)
-
-### Write essential callbacks <a name="dict-call"></a>
-Write callbacks for [`getIntermediateUserTranscript`](Resume.js.md#getIntermediateUserTranscript) and [`onReceiveTranscript`](Resume.js.md#onReceiveTranscript) as same as [Conversation Mode](#conv-call).    
-
-**The different** point between [Dictation Mode](#dictate) and [Conversation Mode](#conv-call) is that the [transcript](Resume.js.md#Transcript) argument of [`onReceiveTranscript`](Resume.js.md#onReceiveTranscript) has **`MlGroupTxt` and `TagRawTxt` keys**. Both are the object which keys' name follow the [Terminology of "C-CDA 1.1.0 on FHIR resource profile"](../README.md#freq-doc).  
-  
-For more information about ["C-CDA 1.1.0 on FHIR resource profile"](CCDA.md), please see [README.md](../README.md#freq-doc).    
-
-```JS
-function _getUserTranscribe () {
-            // this format follows C-CDA, http://hl7.org/fhir/us/ccda/artifacts.html#structures-resource-profiles  .
-            // Same to conversation Mode
-            return {
-                chief_complaint_section: this.CC,
-                history_of_present_illness_section: this.PI,
-                past_medical_history_section: this.PHx,
-                problem_section: this.Dx,
-                follow_up_section: this.FU
-            };
-        }
-function _onReceiveTranscript (transcript, isEnd) {
-            log('Recieved Transcript.. ' + JSON.stringify(transcript));
-            if (isEnd) {
-                // Action when API stop session completely.
-            }
-            if (transcript.MlGroupTxt) {
-                // The response will have keys like the Terminology of "C-CDA 1.1.0 on FHIR resource profile".
-                rPI = transcript.MlGroupTxt.history_of_present_illness_section;
-                // .. and more rPHx = transcript.MlGroupTxt.....
-
-                /* ... */
-                ////
-
-                if(transcript.TagRawTxt.other)
-                    rPI.push(...transcript.TagRawTxt.other);
-            }
-            
-            //////////////////////////////////////////////////////
-            /// This below lines differ from Conversation Mode ///
-            //////////////////////////////////////////////////////
-            if (transcript.TagRawTxt) {
-                // The response will have keys like the Terminology of "C-CDA 1.1.0 on FHIR resource profile".
-                tCC = transcript.TagRawTxt.chief_complaint_section;
-                tPI = transcript.TagRawTxt.history_of_present_illness_section;
-                
-                /* ... */
-                /////
-            }
-        }
-```
-
-### Create `Socket.IO` client and `ResumeOne` object <a name="dict-create"></a>
-Place [`ResumeOne`](Resume.js.md#ResumeOne) object construction in callback after loading page. The [`resumeOption`](Resume.js.md#new-resumeonesocket-resumeoption) argument should follow [`RESUME_DEFAULT_OPTION`](Resume.js.md#RESUME_DEFAULT_OPTION) object.
-
-**The different** of [Dictation Mode](#dictate) from [Conversation Mode](#conv-call) is the **`multiSpeaker: false`** in [`resumeOption`](Resume.js.md#new-resumeonesocket-resumeoption).
-
-```JS
-var socket = io();
-
-///
-/// in completely loaded callback
-var resume = new ResumeOne(socket,
-    {
-        getIntermediateUserTranscript: _getUserTranscribe,  // from above
-        onReceiveTranscript: this._onReceiveTranscript,   // from above
-        multiSpeaker: false   // this is dictation Mode!
-    });
-```
-  
-
-### Start new session for recording <a name="dict-start"></a>
-When user trigers start event, you should set [`tag` property](Resume.js.md#ResumeChild) of `Resume Object` when start new session or change to other input field.
-```JS
-// !!Before start: set tag of input 
-resume.tag = "chief_complaint_section";
-// under start callback
-resume.newSession(Hint,
-    { HN: HN, TXN: TXN, Practioner: Practioner, Location:Location }, // Patient and Healthcare worker identifier for sending to local logging server, Not send to Resume API publically.
-    sectionID, // Section to logging on Resume usage DB
-    sectionFormat  // Document format  must follows C-CDA. Please see README.md and Resume.js.md documentation
-);
-/// Other code here..
-log('Recording...');
-```
-
-
-### Pause, Resume  and Stop recording and End session <a name="dict-control"></a>
-As same as [Conversation Mode](#prepare)   
-***Warning!*** for better `Resume API` accuracy, please end session only if change the patients or close the page. If you want to change to other input field. Please change the value of [`tag` property](Resume.js.md#ResumeChild), and control by pause and resume.
-
-
-```JS
-// When use record on other input field, change the tag to corresponding name
-resume.tag = "history_of_present_illness_section";
-
-
-// to pause, or when user stop recording at some field
-resume.pause();
-// to resume, or when user start recording at some field
-resume.resume();
-
-// !!Only if change to other patient or close windows
-resume.endSession(_getUserTranscribe()); //get final user transcript from function
-// Can be omitted like below,
-// resume.endSession();
-// if you provide `getIntermediateUserTranscript`
-```
-  
-
-### Update the Result  <a name="dict-update"></a>
-As same as, [Conversation Mode](#prepare), the [`ResumeOne`](Resume.js.md#ResumeOne) object automatically updates the `Resume API` response to client. It will call the [`onReceiveTranscript`](#conv-call). It also stores result in [`transcript` property](Resume.js.md#ResumeChild)
-**The different** of [Dictation Mode](#dictate) from [Conversation Mode](#conv-call) is that the [`transcript property`](Resume.js.md#Transcript) has both **`MlGroupTxt` and `TagRawTxt` keys**. Both are the object which keys' name follow the [Terminology of "C-CDA 1.1.0 on FHIR resource profile"](../README.md#freq-doc).  
-
-```JS
-// Normally, ResumeOne always automatically calls onReceiveTranscript when recieved Resume API response.
-// If you prefer to get result from property, use this
-let response = resume.transcript;
-```
-
--------  
-<br/>  
-  
-
-
-
-## Combination Conversation-Dictation Mode
-### Prepare HTML page for script
-Same to [Conversation and Dictation Mode](#prepare)
-
-### Write essential callbacks
-Same to [Dictation Mode](#dict-call)
- 
-### Create `Socket.IO` client and `ResumeOne` object
-Same to [Conversation Mode](#conv-create)
-
-### Start new session for recording
-Same to [Dictation Mode](#dict-start)
-
-### Pause, Resume  and Stop recording and End session
-Same to [Dictation Mode](#dict-control)
-
-### Update the Result
-Same to [Dictation Mode](#dict-update)
-  
-
--------  
-<br/>  
-
 
 ## Differences between Resume Transcription Mode
 
