@@ -189,6 +189,11 @@ class ResumeChild extends AbstractResume {
 
     transcript
     isFinalTranscript
+    socket
+
+    constructor(socket) {
+        this.socket = socket;
+    }
 
     _checkSessionID(res) {
         return (res && (res.session_id == this.sessionId) && (res.section_id == this.sectionID))
@@ -268,7 +273,7 @@ class ResumeChild extends AbstractResume {
             this._waitBlobs.push([blob, info]);
         } else if (this._waitBlobs.length <= 0) {
             console.log('Emit stream... ', this.sessionId, "\nCount ID: ", info._id, "\nsize = ", (blob ? (blob.size / 1024) : null), ' KB\nCookie: ', this._cookies);
-            socket.emit(SS_AUDIO_STREAM, blob, info, this.sessionId, this.sectionID, this._cookies);
+            this.socket.emit(SS_AUDIO_STREAM, blob, info, this.sessionId, this.sectionID, this._cookies);
         }
         if (blob) {
             this._sentBlobCount++;
@@ -283,7 +288,7 @@ class ResumeChild extends AbstractResume {
                 let sid = this.sessionId, sec = (this.sectionID || this.defaultSectionID), ck = this._cookies;
                 this._waitBlobs.forEach(function (val, i, wB) {
                     console.log('streaming wait queue..' + i);
-                    socket.emit(SS_AUDIO_STREAM, val[0], val[1], sid, sec, ck);
+                    this.socket.emit(SS_AUDIO_STREAM, val[0], val[1], sid, sec, ck);
                     wB.splice(0, 1); // drop first
                 });
             } else {
@@ -311,7 +316,7 @@ class ResumeChild extends AbstractResume {
             docFormat = this.defaultDocFormat;
 
         let _this = this;
-        socket.emit(EVENT_CLIENT_INIT,
+        this.socket.emit(EVENT_CLIENT_INIT,
             this.sectionID,
             langSuggest,
             hint,
@@ -495,7 +500,7 @@ class ResumeOne extends ResumeChild {
     * 
     */
     constructor(socket, resumeOption) {
-        super();
+        super(socket);
         this.recorder = new ResumeRecorder();
         if (resumeOption) {
             for (let k in resumeOption) {
