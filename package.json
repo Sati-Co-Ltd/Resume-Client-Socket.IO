@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/pahntanapat/Resume-Client-Socket.IO#readme",
   "dependencies": {
-    "resume-node-rest-connector": "^1.2.4",
+    "resume-node-rest-connector": "^1.2.5",
     "socket.io": "^4.2.0"
   }
 }
