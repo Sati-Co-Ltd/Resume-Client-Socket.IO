@@ -240,6 +240,17 @@ function SIOOnConnection(optionSIO) {
         var update_timer = null;
         var _last_update = 0;
 
+        let logger = pino(pino.destination({ sync: false }))
+            .child(((optionSIO && optionSIO.log) ? optionSIO.log : {}));
+        logger.info({
+            socket: {
+                id: socket.id,
+                rooms: socket.rooms,
+                request: socket.request,
+                handshake: socket.handshake
+            }
+        }, 'SIO: connection');
+
         // sioCheckTime(socket);
         if (optionSIO.onConnectionCallback && ((typeof optionSIO.onConnectionCallback) == 'function'))
             optionSIO.onConnectionCallback(socket);
@@ -250,7 +261,10 @@ function SIOOnConnection(optionSIO) {
         }
         function serverResponse(sessionId, sectionID, cookies, data, is_end) {
             if (CLIENT_CONNECTED) {
-                console.log('Received data:', JSON.stringify(data));
+                logger.info({
+                    data: data
+                }, 'SIO: received data');
+
                 socket.emit(SS_RESP_TRNSCR, data, data.is_end);
                 _last_update = data.update || (Date.now() / 1000);
                 if (!(data.is_end || is_end)) {
@@ -263,13 +277,14 @@ function SIOOnConnection(optionSIO) {
                 }
             }
             else {
-                console.log('REST API send message, but client closed:', JSON.stringify(data));
+                logger.info({
+                    data: data
+                }, 'SIO: received data after client closed');
             }
         }
         function emitErr(sessionId, sectionID, err) {
             socket.emit(STREAM_ERROR, sessionId, sectionID, err.message);
-            console.error(err);
-            console.log(colours.fg.red, err, colours.reset);
+            logger.error(err, 'SIO: error');
         }
         function serverErr(sessionId, sectionID, lastUpdate, cookies, err) {
             try {
@@ -278,8 +293,7 @@ function SIOOnConnection(optionSIO) {
                     updateTimeout(sessionId, sectionID, lastUpdate, cookies);
 
             } catch (e) {
-                console.log(err);
-                console.log(e);
+                logger.error({ catchError: err, receivedError: err }, 'SIO: catch error in serverErr');
             }
         }
 
@@ -300,15 +314,22 @@ function SIOOnConnection(optionSIO) {
                 update_timer = null;
             }
         }
-
-        console.log(colours.fg.green, 'Client connected ' + new Date(), socket.request.connection._peername.address, colours.reset);
         restClient.test();
 
 
         socket.on('disconnect', () => {
             updateClear();
             // sioStopCountDown(socket);
-            console.log(colours.fg.red, 'disconnected', socket.request.connection._peername.address, colours.reset);
+
+            logger.info({
+                socket: {
+                    id: socket.id,
+                    rooms: socket.rooms,
+                    request: socket.request,
+                    handshake: socket.handshake
+                }
+            }, 'SIO: disconnected');
+
             CLIENT_CONNECTED = false;
 
             if (optionSIO.onDisconnectCallback && ((typeof optionSIO.onDisconnectCallback) == 'function'))
