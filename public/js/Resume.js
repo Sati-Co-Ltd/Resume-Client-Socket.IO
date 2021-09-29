@@ -192,6 +192,7 @@ class ResumeChild extends AbstractResume {
     socket
 
     constructor(socket) {
+        super();
         this.socket = socket;
     }
 
