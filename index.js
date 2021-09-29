@@ -262,7 +262,11 @@ function SIOOnConnection(optionSIO) {
         function serverResponse(sessionId, sectionID, cookies, data, is_end) {
             if (CLIENT_CONNECTED) {
                 logger.info({
-                    data: data
+                    data: data,
+                    cookies: cookies,
+                    sessionId: sessionId,
+                    sectionID: sectionID,
+                    isEnd: is_end
                 }, 'SIO: received data');
 
                 socket.emit(SS_RESP_TRNSCR, data, data.is_end);
@@ -412,7 +416,15 @@ function SIOOnConnection(optionSIO) {
              */
             updateClear();
 
-            console.log(colours.fg.yellow, 'received stream: ', blob ? (blob.length / 1024) : blob, ' KB ', sessionId, sectionID, cookies, ' \n', info, colours.reset);
+            logger.info({
+                socket: socket,
+                sessionId: sessionId,
+                sectionID: sectionID,
+                info: info,
+                cookies: cookies,
+                blobSize: blob ? blob.length : blob
+            }, 'SIO: received stream ' + (blob ? (blob.length / 1024) : blob) + ' KB');
+
 
             // Send Message to  Server
             restClient.sendSound(sessionId, sectionID, info, blob, cookies)
