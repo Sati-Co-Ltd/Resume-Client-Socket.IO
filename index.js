@@ -340,17 +340,26 @@ function SIOOnConnection(optionSIO) {
          * When Client requests for session_id from REST API
          */
         socket.on(EVENT_CLIENT_INIT, (sectionId, lang, hint, docFormat, multiSpeaker, identifier, userStartTime, retryCallback) => {
-            if (optionSIO.onNewTranscriptSessionSyncCheck && ((typeof optionSIO.onNewTranscriptSessionSyncCheck) == 'function'))
-                if (!optionSIO.onNewTranscriptSessionSyncCheck({
-                    socket: socket,
-                    identifier: identifier,
-                    sectionId: sectionId,
-                    lang: lang,
-                    hint: hint,
-                    docFormat: docFormat,
-                    multiSpeaker: multiSpeaker,
-                    userStartTime: userStartTime
-                })) return false;
+            let params = {
+                socket: socket,
+                identifier: identifier,
+                sectionId: sectionId,
+                lang: lang,
+                hint: hint,
+                docFormat: docFormat,
+                multiSpeaker: multiSpeaker,
+                userStartTime: userStartTime
+            };
+            logger.info(params, 'SIO: request new session');
+
+
+            if (optionSIO.onNewTranscriptSessionSyncCheck && ((typeof optionSIO.onNewTranscriptSessionSyncCheck) == 'function')) {
+                if (!optionSIO.onNewTranscriptSessionSyncCheck(params)) {
+                    logger.warn(params, 'SIO: new session, checking failed');
+                    return false;
+                }
+            }
+
 
             let pCreate = restClient.newSession(sectionId, lang || null, hint || null, docFormat || null, multiSpeaker || false, userStartTime);
             pCreate.then((res) => {
@@ -361,19 +370,13 @@ function SIOOnConnection(optionSIO) {
                 // console.log(EVENT_CLIENT_INIT, identifier);
                 //save the real identifier and pseudo-identifier to local db record
                 //identifier;
+                params.sessionID = res.data.session_id;
+                params.pseudoIdentifier = res.data.pseudoIdentifier;
+
+                logger.info(params, 'SIO: received new session id');
+
                 if (optionSIO.onReceivedTranscriptionSessionID && ((typeof optionSIO.onReceivedTranscriptionSessionID) == 'function'))
-                    optionSIO.onReceivedTranscriptionSessionID({
-                        socket: socket,
-                        sessionID: res.data.session_id,
-                        pseudoIdentifier: res.data.pseudoIdentifier,
-                        identifier: identifier,
-                        sectionId: sectionId,
-                        lang: lang,
-                        hint: hint,
-                        docFormat: docFormat,
-                        multiSpeaker: multiSpeaker,
-                        userStartTime: userStartTime
-                    });
+                    optionSIO.onReceivedTranscriptionSessionID(params);
 
             });
 
@@ -391,22 +394,15 @@ function SIOOnConnection(optionSIO) {
                 }
             });
             pCreate.catch(err => {
+                err.methodSIO = 'new session';
+
                 if ((typeof retryCallback) == 'function')
                     retryCallback();
                 serverErr(null, sectionId, _last_update, err);
             });
 
             if (optionSIO.onNewTranscriptSessionCallback && ((typeof optionSIO.onNewTranscriptSessionCallback) == 'function'))
-                optionSIO.onNewTranscriptSessionCallback({
-                    socket: socket,
-                    identifier: identifier,
-                    sectionId: sectionId,
-                    lang: lang,
-                    hint: hint,
-                    docFormat: docFormat,
-                    multiSpeaker: multiSpeaker,
-                    userStartTime: userStartTime
-                });
+                optionSIO.onNewTranscriptSessionCallback(params);
             return pCreate;
         });
 
