@@ -10,6 +10,9 @@
  */
 
 const path = require('path');
+const pino = require('pino');
+
+
 const colours = { reset: "[0m", bright: "[1m", dim: "[2m", underscore: "[4m", blink: "[5m", reverse: "[7m", hidden: "[8m", fg: { black: "[30m", red: "[31m", green: "[32m", yellow: "[33m", blue: "[34m", magenta: "[35m", cyan: "[36m", white: "[37m", crimson: "[38m" }, bg: { black: "[40m", red: "[41m", green: "[42m", yellow: "[43m", blue: "[44m", magenta: "[45m", cyan: "[46m", white: "[47m", crimson: "[48m" } };
 const
     EVENT_CLIENT_INIT = 'press-record',
@@ -95,6 +98,7 @@ const UPDATE_INTERVAL = 5000;
  * @param {endTranscriptSessionCallback} [onEndTranscriptSessionCallback] Callback when Resume.js client end the Resume session
  * @param {receivedEndTranscriptSessionCallback} [onReceivedEndTranscriptSessionCallback] Callback Resume API response that the session ended
  * @param {receivedSoundCallback} [onReceivedSoundCallback] Callback when Resume Received sound chunk
+ * @param {object} [log] inherited properties to child logger
  */
 class OptionSIO {
     resumeApiClient
@@ -107,6 +111,8 @@ class OptionSIO {
     onEndTranscriptSessionCallback
     onReceivedEndTranscriptSessionCallback
     onReceivedSoundCallback
+
+    log
 }
 
 /**
@@ -117,6 +123,7 @@ class OptionSIO {
  * @param {string} [nameSpace] optional namespace for Socket.IO
  * @param {object} [ioOptions] option for create Socket.IO server if io is undefined.
  * @param {int} [port] port for create Socket.IO server if io is undefined.
+ * @param {object} [log] inherited properties to child logger
  */
 class OptionBindSIO {
     server
@@ -125,6 +132,7 @@ class OptionBindSIO {
     ioOptions
 
     port
+    log
 }
 
 /** 
@@ -135,28 +143,57 @@ class OptionBindSIO {
  * @returns {socket.io~Server} Socket.IO Server object
  */
 function BindSIO(optionBindSIO, optionSIO) {
-    let io = optionBindSIO.io;
     if (!optionBindSIO) {
         optionBindSIO = true;
     }
+
+    let logger = pino(pino.destination({ sync: false }))
+        .child(((optionBindSIO.log) ? optionBindSIO.log : {}));
+
+
+    let io = optionBindSIO.io;
     if (!(optionBindSIO.server || io)) {
         // Neither server nor socket io
         // Create standalone socket io
         if (typeof optionBindSIO.port == "number") {
+            logger.info({
+                port: optionBindSIO.port,
+                ioOptions: optionBindSIO.ioOptions
+            },
+                'BindSIO: create Socket.IO server');
             io = require("socket.io")(optionBindSIO.port, optionBindSIO.ioOptions);
         } else {
+            logger.info({
+                ioOptions: optionBindSIO.ioOptions
+            },
+                'BindSIO: create Socket.IO server');
             io = require("socket.io")(optionBindSIO.ioOptions);
         }
     } else if (!io) {
         // Give server but not IO
+        logger.info({
+            ioOptions: optionBindSIO.ioOptions
+        },
+            'BindSIO: bind Socket.IO to server');
         io = require("socket.io")(optionBindSIO.server, optionBindSIO.ioOptions);
     }
 
     // Bind function on Connection
     if (optionBindSIO.nameSpace) {
         // User specify nameSpace in option
+        logger.info({
+            optionSIO: optionSIO,
+            nameSpace: optionBindSIO.nameSpace
+        },
+            'BindSIO: use SIOOnConnection in namespace on connection');
+
         io.of(optionBindSIO.nameSpace).on('connection', SIOOnConnection(optionSIO));
     } else {
+        logger.info({
+            optionSIO: optionSIO
+        },
+            'BindSIO: use SIOOnConnection on connection');
+
         io.on('connection', SIOOnConnection(optionSIO));
     }
     return io;
