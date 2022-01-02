@@ -144,6 +144,7 @@ class RESUME_DEFAULT_OPTION {
     onRecorderStop = function (recordHistory) { }
     onError = function (err) { }
 
+    microphoneName = ["main", "another", "noise-cancelling"]
 };
 
 
