@@ -374,6 +374,11 @@ class ResumeRecorder {
     microphone
     alertError
     msSoundChuck = 1000
+
+    constructor() {
+
+    }
+
     /** 
     * Get status of recoder can be one of REC_PAUSED = "paused", REC_STOP = "stopped", REC_INACTIVE = "inactive", REC_RECORDING = "recording", REC_NULL = null
     * @summary get status of recoder
@@ -391,21 +396,26 @@ class ResumeRecorder {
         }
         return true;
     }
+
+    _newRecordRTC(Pushblob, msSoundChuck, onStateChanged) {
+        this.recorder = RecordRTC(this.microphone, {
+            type: 'audio',
+            mimeType: 'audio/wav',
+            sampleRate: 44100,
+            desiredSampRate: 16000,
+            recorderType: StereoAudioRecorder,
+            numberOfAudioChannels: 1,
+            timeSlice: msSoundChuck || 1000, // returns blob every 1s (the less time, the much chunk created)
+            ondataavailable: Pushblob,
+        });
+        this.recorder.onStateChanged = onStateChanged;
+    }
+
     _startRecorder(Pushblob, msSoundChuck, onStateChanged) {
         if (this.recorder) {
             this.recorder.reset();
         } else {
-            this.recorder = RecordRTC(this.microphone, {
-                type: 'audio',
-                mimeType: 'audio/wav',
-                sampleRate: 44100,
-                desiredSampRate: 16000,
-                recorderType: StereoAudioRecorder,
-                numberOfAudioChannels: 1,
-                timeSlice: msSoundChuck || 8000, // returns blob every 8s (the less time, the much chunk created)
-                ondataavailable: Pushblob,
-            });
-            this.recorder.onStateChanged = onStateChanged;
+            this._newRecordRTC(Pushblob, msSoundChuck, onStateChanged);
         }
 
 
@@ -503,13 +513,20 @@ class ResumeOne extends ResumeChild {
     */
     constructor(socket, resumeOption) {
         super(socket);
-        this.recorder = new ResumeRecorder();
+        // this.recorder = new ResumeRecorder();
         if (resumeOption) {
             for (let k in resumeOption) {
                 if (k in this) {
                     this[k] = resumeOption[k];
                 }
             }
+        }
+
+        if ((!this.microphoneName) || (this.microphoneName.length == 0)) {
+            this.microphoneName = ["default"];
+        }
+        for (let k in this.microphoneName) {
+            this.recorder[k]
         }
 
         this.socket = socket;
@@ -519,6 +536,22 @@ class ResumeOne extends ResumeChild {
 
         this.socket.on(EVENT_SERVER_SESSION_ID, (res, cookies) => this._sioReceiveSessionID(res, cookies));
         this.socket.on(STREAM_ERROR, (sessionId, sectionID, e) => this._handleError(sessionId, sectionID, e));
+    }
+
+    _onRecorderStageChanged(state) {
+        switch (state) {
+            case REC_RECORDING:
+                if (!this._recordStart)
+                    this._recordStart = Date.now();
+                break;
+            case REC_INACTIVE:
+            case REC_PAUSED:
+            case REC_STOP:
+                if (this._recordStart) {
+                    this._recordTime += (Date.now() - this._recordStart);
+                    this._recordStart = null;
+                }
+        }
     }
 
     /**
@@ -558,20 +591,8 @@ class ResumeOne extends ResumeChild {
         this.recorder._startRecorder(
             (blob) => this._pushBlob(blob),
             this.msSoundChuck,
-            (state) => {
-                switch (state) {
-                    case REC_RECORDING:
-                        this._recordStart = Date.now();
-                        break;
-                    case REC_INACTIVE:
-                    case REC_PAUSED:
-                    case REC_STOP:
-                        if (this._recordStart) {
-                            this._recordTime += (Date.now() - this._recordStart);
-                            this._recordStart = null;
-                        }
-                }
-            });
+            (state) => this._onRecorderStageChanged(state)
+        );
         //let _this = this;
     }
     //start = newSession
