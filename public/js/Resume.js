@@ -181,6 +181,7 @@ class ResumeChild extends AbstractResume {
     _identifier
     _waitBlobs
     _blobChunk
+    _blobEnd
 
     sessionId
     sectionID = null;
@@ -263,7 +264,8 @@ class ResumeChild extends AbstractResume {
 
     _setBlob(blob, index, isEnd, userTranscript) {
         this._blobChunk[index] = blob;
-        if (this._blobChunk.reduce((prev, c) => (c && prev))) {
+        this._blobEnd[index] = isEnd;
+        if (this._blobChunk.reduce((prev, c) => (c && prev)) || this._blobEnd.reduce((prev, c) => (c && prev))) {
             this._pushBlob(this._blobChunk, isEnd, userTranscript);
             this._blobChunk = Array.from({ length: this._blobChunk.length })
         }
@@ -348,14 +350,15 @@ class ResumeChild extends AbstractResume {
         stopRecorderCallback((blobURL, blob) => {
             // Pushblob with end
             if (this.sentBlobSize < blob.size)
-                this._pushBlob(blob.slice(this.sentBlobSize), true, userTranscript);
+                this._setBlob(blob.slice(this.sentBlobSize), true, userTranscript);
             else
-                this._pushBlob(null, true, userTranscript);
+                this._setBlob(null, true, userTranscript);
             console.log("Stop recording....\nTotal sound chunk: ", this._sentBlobCount, "\nTotal Size: ", (this.sentBlobSize / (1 << 20)), ' MB');
             //keep SessionID and sectionID to receive some callback
             //this.sectionID = null;
 
             callback = callback || this.onRecorderStop;
+            // Check if all stop
             if (callback)
                 return callback({
                     session_id: this.sessionId,
@@ -531,7 +534,10 @@ class ResumeOne extends ResumeChild {
         if ((!this.microphoneName) || (this.microphoneName.length == 0)) {
             this.microphoneName = ["default"];
         }
-        this._blobChunk = Array.from({ length: this.microphoneName.length })
+
+        this._blobChunk = new Array(this.microphoneName.length).fill(undefined);
+        this._blobEnd = new Array(this.microphoneName.length).fill(false);
+
         for (let k in this.microphoneName) {
             this.recorder[k] = ResumeRecorder();
             this.recorder[k]._newRecordRTC(
