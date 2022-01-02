@@ -180,6 +180,7 @@ class ResumeChild extends AbstractResume {
     _sentBlobCount
     _identifier
     _waitBlobs
+    _blobChunk
 
     sessionId
     sectionID = null;
@@ -260,6 +261,14 @@ class ResumeChild extends AbstractResume {
         return null;
     }
 
+    _setBlob(blob, index, isEnd, userTranscript) {
+        this._blobChunk[index] = blob;
+        if (this._blobChunk.reduce((prev, c) => (c && prev))) {
+            this._pushBlob(this._blobChunk, isEnd, userTranscript);
+            this._blobChunk = Array.from({ length: this._blobChunk.length })
+        }
+    }
+
     _pushBlob(blob, isEnd, userTranscript) {
         // !! important, this code will record every single stream chunck onto server; so practically should upload only audio that is validated from speech engine
         var info = {
@@ -274,7 +283,7 @@ class ResumeChild extends AbstractResume {
             console.log("Add blob to queue" + info)
             this._waitBlobs.push([blob, info]);
         } else if (this._waitBlobs.length <= 0) {
-            console.log('Emit stream... ', this.sessionId, "\nCount ID: ", info._id, "\nsize = ", (blob ? (blob.size / 1024) : null), ' KB\nCookie: ', this._cookies);
+            console.log('Emit stream... ', this.sessionId, "\nCount ID: ", info._id, "\nsize = ", (blob ? (blob.reduce((prev, c) => prev.push(c.size / 1024), [])) : null), ' KB\nCookie: ', this._cookies);
             this.socket.emit(SS_AUDIO_STREAM, blob, info, this.sessionId, this.sectionID, this._cookies);
         }
         if (blob) {
@@ -375,10 +384,6 @@ class ResumeRecorder {
     alertError
     msSoundChuck = 1000
 
-    constructor() {
-
-    }
-
     /** 
     * Get status of recoder can be one of REC_PAUSED = "paused", REC_STOP = "stopped", REC_INACTIVE = "inactive", REC_RECORDING = "recording", REC_NULL = null
     * @summary get status of recoder
@@ -411,11 +416,12 @@ class ResumeRecorder {
         this.recorder.onStateChanged = onStateChanged;
     }
 
-    _startRecorder(Pushblob, msSoundChuck, onStateChanged) {
+    _startRecorder() {
         if (this.recorder) {
             this.recorder.reset();
         } else {
-            this._newRecordRTC(Pushblob, msSoundChuck, onStateChanged);
+            this.alertError('Recorder is not started! Please call _newRecordRTC')
+            //this._newRecordRTC(Pushblob, msSoundChuck, onStateChanged);
         }
 
 
@@ -525,8 +531,14 @@ class ResumeOne extends ResumeChild {
         if ((!this.microphoneName) || (this.microphoneName.length == 0)) {
             this.microphoneName = ["default"];
         }
+        this._blobChunk = Array.from({ length: this.microphoneName.length })
         for (let k in this.microphoneName) {
-            this.recorder[k]
+            this.recorder[k] = ResumeRecorder();
+            this.recorder[k]._newRecordRTC(
+                (blob) => this._setBlob(blob, k),
+                this.msSoundChuck,
+                (state) => this._onRecorderStageChanged(state)
+            );
         }
 
         this.socket = socket;
@@ -588,11 +600,9 @@ class ResumeOne extends ResumeChild {
         super._newSession(this.socket, hint, identifier, sectionID, docFormat, langSuggest);
 
         this._recordTime = 0;
-        this.recorder._startRecorder(
-            (blob) => this._pushBlob(blob),
-            this.msSoundChuck,
-            (state) => this._onRecorderStageChanged(state)
-        );
+        for (let k in this.recorder)
+            this.recorder[k]._startRecorder();
+
         //let _this = this;
     }
     //start = newSession
