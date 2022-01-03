@@ -180,8 +180,10 @@ class ResumeChild extends AbstractResume {
     _sentBlobCount
     _identifier
     _waitBlobs
+
     _blobChunk
     _blobEnd
+
 
     sessionId
     sectionID = null;
@@ -265,7 +267,7 @@ class ResumeChild extends AbstractResume {
     _setBlob(blob, index, isEnd, userTranscript) {
         this._blobChunk[index] = blob;
         this._blobEnd[index] = isEnd;
-        if (this._blobChunk.reduce((prev, c) => (c && prev)) || this._blobEnd.reduce((prev, c) => (c && prev))) {
+        if (this._blobChunk.every(x => x) || this._blobEnd.every(x => x)) {
             this._pushBlob(this._blobChunk, isEnd, userTranscript);
             this._blobChunk = Array.from({ length: this._blobChunk.length })
         }
@@ -289,8 +291,10 @@ class ResumeChild extends AbstractResume {
             this.socket.emit(SS_AUDIO_STREAM, blob, info, this.sessionId, this.sectionID, this._cookies);
         }
         if (blob) {
-            this._sentBlobCount++;
-            this.sentBlobSize += blob.size;
+            for (let k in blob) {
+                this._sentBlobCount[k]++;
+                this.sentBlobSize[k] += blob[k].size;
+            }
         }
         this._pushWaitBlob();
     }
@@ -313,8 +317,8 @@ class ResumeChild extends AbstractResume {
 
     _newSession(socket, hint, identifier, sectionID, docFormat, langSuggest) {
         this._waitBlobs = [];
-        this._sentBlobCount = 0;
-        this.sentBlobSize = 0;
+        this._sentBlobCount = new Array(this._blobEnd.length).fill(0);
+        this.sentBlobSize = new Array(this._blobEnd.length).fill(0);
         this.transcript = null;
         this.isFinalTranscript = false;
 
@@ -331,6 +335,7 @@ class ResumeChild extends AbstractResume {
         let _this = this;
         this.socket.emit(EVENT_CLIENT_INIT,
             this.sectionID,
+            this.microphoneName,
             langSuggest,
             hint,
             docFormat,
@@ -342,31 +347,32 @@ class ResumeChild extends AbstractResume {
 
     }
 
-    _endSession(stopRecorderCallback, userTranscript, callback) {
+    _endSession(index, stopRecorderCallback, userTranscript, callback) {
         //let _this = this, identifier = this._identifier;
-        if (!userTranscript)
-            userTranscript = this._intermediateUserTranscript();
 
         stopRecorderCallback((blobURL, blob) => {
             // Pushblob with end
-            if (this.sentBlobSize < blob.size)
-                this._setBlob(blob.slice(this.sentBlobSize), true, userTranscript);
+            if (this.sentBlobSize[index] < blob.size)
+                this._setBlob(blob.slice(this.sentBlobSize[index]), true, userTranscript);
             else
                 this._setBlob(null, true, userTranscript);
-            console.log("Stop recording....\nTotal sound chunk: ", this._sentBlobCount, "\nTotal Size: ", (this.sentBlobSize / (1 << 20)), ' MB');
+            console.log("Stop recording: ", index, "....\nTotal sound chunk: ", this._sentBlobCount, "\nTotal Size: ", (this.sentBlobSize[index] / (1 << 20)), ' MB');
             //keep SessionID and sectionID to receive some callback
             //this.sectionID = null;
 
-            callback = callback || this.onRecorderStop;
-            // Check if all stop
-            if (callback)
-                return callback({
-                    session_id: this.sessionId,
-                    identifier: this._identifier,
-                    url: blobURL,
-                    blobsize: blob.size,
-                    user_transcript: userTranscript
-                });
+            this._blobEnd[index] = blobURL;
+            if (this._blobEnd.every(x => x)) {
+                // Check if all stop
+                if (callback)
+                    return callback({
+                        session_id: this.sessionId,
+                        identifier: this._identifier,
+                        url: this._blobEnd,
+                        blobsize: this.sentBlobSize,
+                        blobcount: this._sentBlobCount,
+                        user_transcript: userTranscript
+                    });
+            }
         });
 
 
@@ -510,7 +516,7 @@ class ResumeRecorder {
 */
 
 
-class ResumeOne extends ResumeChild {
+class Resume extends ResumeChild {
 
     recorder
 
@@ -577,7 +583,7 @@ class ResumeOne extends ResumeChild {
      * @returns {string} recorder status as the `const REC_PAUSED = "paused", REC_STOP = "stopped", REC_INACTIVE = "inactive", REC_RECORDING = "recording", REC_NULL = null;`
      */
     getStatus() {
-        return this.recorder ? this.recorder.getStatus() : REC_NULL;
+        return this.recorder ? this.recorder.forEach(i => i.getStatus()) : REC_NULL;
     }
 
     /**
@@ -600,14 +606,17 @@ class ResumeOne extends ResumeChild {
                     )
                 );
         }
+
+        this._blobChunk = new Array(this.microphoneName.length).fill(undefined);
+        this._blobEnd = new Array(this.microphoneName.length).fill(false);
+
         if (!this.recorder._prepareNewSession(() => this.newSession(hint, identifier, sectionID, docFormat, langSuggest)))
             return;
 
         super._newSession(this.socket, hint, identifier, sectionID, docFormat, langSuggest);
 
         this._recordTime = 0;
-        for (let k in this.recorder)
-            this.recorder[k]._startRecorder();
+        this.recorder.forEach(i => i._startRecorder());
 
         //let _this = this;
     }
@@ -620,7 +629,13 @@ class ResumeOne extends ResumeChild {
     */
 
     endSession(userTranscript, callback) {
-        this._endSession((c) => this.recorder._stopRecorder(c), userTranscript, callback);
+        if (!userTranscript)
+            userTranscript = this._intermediateUserTranscript();
+
+        callback = callback || this.onRecorderStop;
+
+        for (let k in this.microphoneName)
+            this._endSession((c) => this.recorder[k]._stopRecorder(c), userTranscript, callback);
     }
 
     /** 
@@ -628,7 +643,7 @@ class ResumeOne extends ResumeChild {
     */
     pause() {
         if (this.allowPause)
-            return this.recorder.pause();
+            return this.recorder.forEach(i => i.pause());
         this._handleError(null, null, 'This ResumeOne object does not allow to pause!!');
     }
     /** 
@@ -636,7 +651,7 @@ class ResumeOne extends ResumeChild {
     */
     resume() {
         if (this.allowPause)
-            return this.recorder.resume();
+            return this.recorder.forEach(i => i.resume());
         this._handleError(null, null, 'This ResumeOne object does not allow to pause/resume!!');
 
     }
