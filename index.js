@@ -461,6 +461,9 @@ function SIOOnConnection(optionSIO) {
                 }).catch(err => { serverErr(sessionId, sectionID, _last_update, cookies, err); });
                 */
 
+            // Test code
+            serverResponse(sessionId, sectionID, cookies, { info: info, update: Date.now() }, is_end)
+
             if (optionSIO.onReceivedSoundCallback && ((typeof optionSIO.onReceivedSoundCallback) == 'function'))
                 optionSIO.onReceivedSoundCallback(socket, sessionId, sectionID, blob, info);
 
