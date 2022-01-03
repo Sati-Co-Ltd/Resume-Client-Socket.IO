@@ -365,7 +365,29 @@ function SIOOnConnection(optionSIO) {
             }
 
 
+            // Commend for debug
+            /*
             let pCreate = restClient.newSession(sectionId, lang || null, hint || null, docFormat || null, multiSpeaker || false, userStartTime);
+            */
+
+            // False pCreate for debug
+            let pCreate = new Promise((resolve, reject) => {
+                let sessionID = Math.random();
+                let pseudoID = Math.LN10;
+                logger.debug(`Create session ID = ${sessionID}, PseudoID = ${pseudoID}`)
+                if (sessionID < 0.1)
+                    return reject({ message: `Test Error session ID = ${sessionID}, PseudoID = ${pseudoID}` });
+
+                return resolve({
+                    data: {
+                        session_id: sessionID,
+                        pseudoIdentifier: pseudoID
+                    },
+                    cookies: 'the=cookies'
+                })
+            });
+
+            // Original Code
             pCreate.then((res) => {
                 socket.emit(EVENT_SERVER_SESSION_ID, res.data, res.cookies);// Send task back
             });
@@ -392,7 +414,7 @@ function SIOOnConnection(optionSIO) {
 
                     // Assign callback for Session
                     restClient.onApiPushResult[res.data.session_id] = (data) => {
-                        // same to updateResult call back
+                        // same to updateResult callback
                         serverResponse(res.data.session_id, sectionID, res.cookies, data);
                     }
                 }
@@ -427,6 +449,9 @@ function SIOOnConnection(optionSIO) {
 
 
             // Send Message to  Server
+
+            // Comment for debug
+            /*
             restClient.sendSound(sessionId, sectionID, info, blob, cookies)
                 .then(data => {
                     let end = data.is_end || info.is_end;
@@ -434,6 +459,7 @@ function SIOOnConnection(optionSIO) {
                     if (end && optionSIO.onReceivedEndTranscriptSessionCallback && (typeof optionSIO.onReceivedEndTranscriptSessionCallback == 'function'))
                         optionSIO.onReceivedEndTranscriptSessionCallback(socket, sessionId, sectionID, data);
                 }).catch(err => { serverErr(sessionId, sectionID, _last_update, cookies, err); });
+                */
 
             if (optionSIO.onReceivedSoundCallback && ((typeof optionSIO.onReceivedSoundCallback) == 'function'))
                 optionSIO.onReceivedSoundCallback(socket, sessionId, sectionID, blob, info);
