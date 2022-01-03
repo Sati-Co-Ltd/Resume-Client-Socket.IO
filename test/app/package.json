@@ -1,0 +1,32 @@
+{
+  "name": "session-demo-page",
+  "version": "1.0.0",
+  "description": "Time-limited demo by session and User data collection",
+  "main": "app.js",
+  "scripts": {
+    "test": "pm2 app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pahntanapat/session-demo-page.git"
+  },
+  "keywords": [
+    "session",
+    "demo",
+    "time-limited",
+    "data",
+    "collection"
+  ],
+  "author": "พชร มีวงศ์อุโฆษ",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pahntanapat/session-demo-page/issues"
+  },
+  "homepage": "https://github.com/pahntanapat/session-demo-page#readme",
+  "dependencies": {
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "pm2": "^5.1.0"
+  }
+}
