@@ -8,7 +8,7 @@ app.set('trust proxy', 1) // trust first proxy
 
 var server,
     port = process.env.PORT,
-    HTTP = ((process.env.HTTP) && (process.env.HTTP != 0)),
+    HTTP = ((process.env.HTTP) && (process.env.HTTP != 0)) || ((process.argv.length > 1) && (process.argv[1] != 0)),
     NODE_ENV = (process.env.NODE_ENV || 'production'),
     PUBLIC_DEMO = (process.env.PUBLIC_DEMO && (process.env.PUBLIC_DEMO != 0)),
 
@@ -102,7 +102,7 @@ app.use('/components', express.static('public/components'));
 
 var loginRoute = express.Router()
 
-const { SIOOnConnection, StaticJSDir } = require('resume-client-socket.io');
+const { SIOOnConnection, StaticJSDir } = require('../../index'); // require('resume-client-socket.io');
 loginRoute.use('/resume', express.static(StaticJSDir()));
 
 let optionSIO;
@@ -115,7 +115,8 @@ if (PUBLIC_DEMO) {
     app.use(router);
     loginRoute.use(sessionMiddleware);
 
-    optionSIO = new (require('resume-client-socket.io').OptionSIO)();
+    // optionSIO = new (require('resume-client-socket.io').OptionSIO)();
+    optionSIO = new (require('../../index').OptionSIO)();
     optionSIO.onConnectionCallback = sioCheckTime;
     optionSIO.onNewTranscriptSessionSyncCheck = function (ParamSessionID) { return sioStartCountDown(ParamSessionID.socket); };
     optionSIO.onEndTranscriptSessionCallback = optionSIO.onDisconnectCallback = sioStopCountDown;
