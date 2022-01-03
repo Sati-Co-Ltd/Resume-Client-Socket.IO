@@ -496,10 +496,15 @@ class ResumeRecorder {
                 callback();
             })
             .catch(error => {
-                this._logError('Unable to capture your microphone. Please check console logs.');
+                this._logError('Unable to capture your microphone. Please check web browser\'s console logs.');
                 this._logError(error);
             });
     }
+
+    _defaultMicDialog(micName, onSelectCallback, onCancelCallback) {
+
+    }
+
     _logError(e) {
         console.error(e);
         let err = 'Error! from Recorder' + (((typeof e) == 'object') ? (('message' in e) ? e.message : JSON.stringify(e)) : e);
