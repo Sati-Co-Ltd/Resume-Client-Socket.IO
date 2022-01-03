@@ -510,7 +510,7 @@ class ResumeRecorder {
 
 
 /**
-* ResumeOne is a class to manage microphone and sound chunk streaming via socket.io
+* Resume is a class to manage microphone and sound chunk streaming via socket.io
 * @extends ResumeChild
 * @property {ResumeRecorder} recorder object of resume recorder to manage microphone.
 */
@@ -543,14 +543,17 @@ class Resume extends ResumeChild {
 
         this._blobChunk = new Array(this.microphoneName.length).fill(undefined);
         this._blobEnd = new Array(this.microphoneName.length).fill(false);
+        this.recorder = new Array(this.microphoneName.length);
 
         for (let k in this.microphoneName) {
-            this.recorder[k] = ResumeRecorder();
-            this.recorder[k]._newRecordRTC(
+            this.recorder[k] = new ResumeRecorder();
+            let newMic = () => this.recorder[k]._newRecordRTC(
                 (blob) => this._setBlob(blob, k),
                 this.msSoundChuck,
                 (state) => this._onRecorderStageChanged(state)
             );
+            if (this.recorder[k]._prepareNewSession(newMic))
+                newMic();
         }
 
         this.socket = socket;
@@ -610,8 +613,8 @@ class Resume extends ResumeChild {
         this._blobChunk = new Array(this.microphoneName.length).fill(undefined);
         this._blobEnd = new Array(this.microphoneName.length).fill(false);
 
-        if (!this.recorder._prepareNewSession(() => this.newSession(hint, identifier, sectionID, docFormat, langSuggest)))
-            return;
+        //if (!this.recorder._prepareNewSession(() => this.newSession(hint, identifier, sectionID, docFormat, langSuggest)))
+        //   return;
 
         super._newSession(this.socket, hint, identifier, sectionID, docFormat, langSuggest);
 
@@ -666,4 +669,6 @@ class Resume extends ResumeChild {
         return jQuery.get(urlSectionJSON || '/section_id.json', { 't': Date.now() });
     }
 }
+
+class ResumeOne extends Resume { } // backward compatibility
 //ResumeOne = { ...ResumeOne, ...ResumeRecorder };
