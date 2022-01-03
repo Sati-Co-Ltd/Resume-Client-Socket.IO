@@ -482,6 +482,9 @@ class ResumeRecorder {
 
         }
 
+        // Show Prompt to select device https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/enumerateDevices
+        // Force select device by ID  https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+        // Dropdown Dialog https://jqueryui.com/dialog/#modal-form
         navigator.mediaDevices.getUserMedia({
             audio: (
                 navigator.userAgent.indexOf('Edge') !== -1 &&
@@ -546,6 +549,7 @@ class Resume extends ResumeChild {
         this.recorder = new Array(this.microphoneName.length);
 
         for (let k in this.microphoneName) {
+            console.log('Prepare mic', k, this.microphoneName[k]);
             this.recorder[k] = new ResumeRecorder();
             let newMic = () => this.recorder[k]._newRecordRTC(
                 (blob) => this._setBlob(blob, k),
