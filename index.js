@@ -342,9 +342,10 @@ function SIOOnConnection(optionSIO) {
         /**
          * When Client requests for session_id from REST API
          */
-        socket.on(EVENT_CLIENT_INIT, (sectionId, lang, hint, docFormat, multiSpeaker, identifier, userStartTime, retryCallback) => {
+        socket.on(EVENT_CLIENT_INIT, (sectionId, micName, lang, hint, docFormat, multiSpeaker, identifier, userStartTime, retryCallback) => {
             let params = {
                 socket: socket,
+                microphone: micName.length,
                 identifier: identifier,
                 sectionId: sectionId,
                 lang: lang,
