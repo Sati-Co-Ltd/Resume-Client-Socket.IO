@@ -200,7 +200,7 @@ var app = new Vue({
             return Math.round((1 + Math.random()) * Date.now());
         },
         loadSection: function () {
-            ResumeOne.loadSectionList().then((res) => {
+            Resume.loadSectionList().then((res) => {
                 this.sectionList = res;
                 return res;
             });
@@ -224,14 +224,19 @@ var app = new Vue({
     },
     mounted: function () {
         //this._uid = this.randomuid();
-        this.resume = new ResumeOne(socket, {
-            getIntermediateUserTranscript: this._getUserTranscribe,
-            onReceiveTranscript: this._onReceiveTranscript,
-            multiSpeaker: true
-        });
+        try {
+            this.resume = new Resume(socket, {
+                getIntermediateUserTranscript: this._getUserTranscribe,
+                onReceiveTranscript: this._onReceiveTranscript,
+                multiSpeaker: true
+            });
+        } catch (e) {
+            console.error(e);
+        }
         this.loadSection();
         document.addEventListener('beforeunload', this.autoEndSession);
         new UserLimit(socket, '#usedTime');
+
     },
 });
 function log(e) {
