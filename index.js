@@ -201,17 +201,17 @@ function BindSIO(optionBindSIO, optionSIO) {
  * Get path of static JavaScript Directory of Resume.js and its dependencies
  * @return {string} path to static JavaScript files
  */
-function staticJsDir() {
-    return path.resolve(__dirname, 'public/js')
+function staticDir() {
+    return path.resolve(__dirname, 'public/')
 }
 
 /** 
  * Get array of path of static JavaScript files of Resume.js and its dependencies
  * @return {string[]} array of path of static files in JavaScript directory
  */
-function staticJsFiles() {
-    return require('fs').readdirSync(staticJsDir()).map((val) => {
-        return path.resolve(__dirname, 'public/js', val);
+function staticFiles() {
+    return require('fs').readdirSync(staticDir()).map((val) => {
+        return path.resolve(__dirname, 'public/', val);
     });
 
 }
@@ -479,6 +479,6 @@ module.exports = {
     SIOOnConnection: SIOOnConnection,
     OptionBindSIO: OptionBindSIO,
     OptionSIO: OptionSIO,
-    StaticJSDir: staticJsDir,
-    StaticJSFiles: staticJsFiles
+    StaticDir: staticDir,
+    StaticFiles: staticFiles
 };

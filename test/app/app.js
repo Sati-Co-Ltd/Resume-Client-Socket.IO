@@ -102,8 +102,8 @@ app.use('/components', express.static('public/components'));
 
 var loginRoute = express.Router()
 
-const { SIOOnConnection, StaticJSDir } = require('../../index'); // require('resume-client-socket.io');
-loginRoute.use('/resume', express.static(StaticJSDir()));
+const { SIOOnConnection, StaticDir } = require('../../index'); // require('resume-client-socket.io');
+loginRoute.use('/resume', express.static(StaticDir()));
 
 let optionSIO;
 
