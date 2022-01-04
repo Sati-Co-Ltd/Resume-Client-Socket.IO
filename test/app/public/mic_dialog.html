@@ -9,7 +9,7 @@
         console.log('Resolve', v);
     }
     var microphoneNameList = ['service provider', 'user', 'noise-cancelling'];
-    $(document).ready(() => {
+    jQuery(document).ready(() => {
 
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             // !! Error also thrown when access via mobile without https.
@@ -24,15 +24,18 @@
             // !! not support navigator.mediaDevices.enumerateDevices
             this._warningOneMicrophone();
             // Return default one: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-            resolve([true]);
+            resolve([{
+                name: microphoneNameList[0],
+                constrain: true
+            }]);
             return;
         }
 
         navigator.mediaDevices.enumerateDevices().then(devices => {
-            console.log(devices);
+            //console.log(devices);
             // count audioinput
             devices = devices.filter(device => (device && (device.kind == 'audioinput')));
-            console.log(devices);
+            //console.log(devices);
             //let count = devices.reduce((count, device) => count + (device && (device.kind == 'audioinput')), 0);
 
             if (devices.length <= 0) {
@@ -69,7 +72,7 @@
             }
             html += `</table><br/><div class="ui-state-error ui-state-highlight" id="resume-dup"><b>Please select distinct (non-duplicated) microphone</b></div></fieldset></div>`;
 
-            html = $(html).dialog({
+            html = jQuery(html).dialog({
                 modal: true,
                 height: 'auto',
                 width: 'auto',
@@ -78,10 +81,10 @@
                     icon: 'ui-icon-check',
                     click: function () {
                         if (checkSelect()) {
-                            //$(html).find('select.resume-mic-select > option:selected').each()
+                            //jQuery(html).find('select.resume-mic-select > option:selected').each()
                             let r = [];
                             for (let k in microphoneNameList) {
-                                let v = $(`#resume-mic-${k} option:selected`).prop('value');
+                                let v = jQuery(`#resume-mic-${k} option:selected`).prop('value');
                                 if (v) {
                                     r.push({
                                         name: microphoneNameList[k],
@@ -90,36 +93,36 @@
                                 }
                             }
                             resolve(r);
-                            $(html).dialog('close');
+                            jQuery(html).dialog('close');
                         }
                     }
                 }]
             });
-            $(html).find('td, th').css('padding', '5px 8px');
+            jQuery(html).find('td, th').css('padding', '5px 8px');
 
-            let select = $(html).find('select.resume-mic-select');
+            let select = jQuery(html).find('select.resume-mic-select');
 
             function checkSelect() {
                 let ok = true;
-                $(select).parents('tr').removeClass("ui-state-error ui-state-highlight");
-                $(html).find('#resume-dup').hide();
-                $(html).find('div.ui-dialog-buttonset > button').show();
-                $(select).each((k, v) => {
-                    val = $(v).find('option:selected').prop('value');
+                jQuery(select).parents('tr').removeClass("ui-state-error ui-state-highlight");
+                jQuery(html).find('#resume-dup').hide();
+                jQuery(html).find('div.ui-dialog-buttonset > button').show();
+                jQuery(select).each((k, v) => {
+                    val = jQuery(v).find('option:selected').prop('value');
                     if (!val) {
-                        $(html).find('#resume-dup').show();
-                        $(html).find('.ui-dialog-buttonset').hide();
-                        $(v).parents('tr').addClass("ui-state-error ui-state-highlight");
+                        jQuery(html).find('#resume-dup').show();
+                        jQuery(html).find('.ui-dialog-buttonset').hide();
+                        jQuery(v).parents('tr').addClass("ui-state-error ui-state-highlight");
                         ok = false;
                     }
-                    $(select).each((i, j) => {
+                    jQuery(select).each((i, j) => {
                         if (k <= i)
                             return;
-                        if (val == $(j).find('option:selected').prop('value')) {
+                        if (val == jQuery(j).find('option:selected').prop('value')) {
                             // console.log(k, i, val)
-                            $(j).parents('tr').addClass("ui-state-error ui-state-highlight");
-                            $(v).parents('tr').addClass("ui-state-error ui-state-highlight");
-                            $(html).find('#resume-dup').show();
+                            jQuery(j).parents('tr').addClass("ui-state-error ui-state-highlight");
+                            jQuery(v).parents('tr').addClass("ui-state-error ui-state-highlight");
+                            jQuery(html).find('#resume-dup').show();
                             ok = false;
                         }
                     });
@@ -127,7 +130,7 @@
                 return ok;
             }
 
-            $(select).selectmenu({
+            jQuery(select).selectmenu({
                 change: () => { checkSelect(); }
             }).parents('tr').addClass("ui-state-error ui-state-highlight");
 
