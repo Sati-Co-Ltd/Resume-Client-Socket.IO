@@ -590,24 +590,32 @@ class Resume extends ResumeChild {
 
             if (!navigator.mediaDevices.enumerateDevices) {
                 // !! not support navigator.mediaDevices.enumerateDevices
-                this._warningOneMicrophone();
+                this._warningOneMicrophone({ mediaDevices: navigator.mediaDevices });
                 // Return default one: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-                resolve([true]);
+                resolve([{
+                    name: microphoneNameList[0],
+                    constrain: true
+                }]);
                 return;
             }
 
             navigator.mediaDevices.enumerateDevices().then(devices => {
+                //console.log(devices);
                 // count audioinput
-                devices = devices.filter(v => (device && (device.kind == 'audioinput')));
+                devices = devices.filter(device => (device && (device.kind == 'audioinput')));
+                //console.log(devices);
                 //let count = devices.reduce((count, device) => count + (device && (device.kind == 'audioinput')), 0);
 
                 if (devices.length <= 0) {
                     reject({ message: 'Not found any available microphone.', mediaDevices: navigator.mediaDevices, devices: devices });
                     return;
                 } else if (devices.length == 1) {
-                    this._warningOneMicrophone();
+                    this._warningOneMicrophone({ mediaDevices: navigator.mediaDevices, devices: devices });
                     // Return default one: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-                    resolve([true]);
+                    resolve([{
+                        name: microphoneNameList[0],
+                        constrain: true
+                    }]);
                     return;
                 }
 
@@ -616,31 +624,83 @@ class Resume extends ResumeChild {
                 if (devices.length < microphoneNameList.length) {
                     html += `<h2><b>Warning!</b> avaliable microphones are not enough for all requirements.</h2>`
                 }
-                html += `<fieldset>`;
+                html += `<fieldset><table style="border-spacing: 10px; width: 100%">`;
                 for (let k in microphoneNameList) {
-                    html += `<label for="resume-mic-${k}">${microphoneNameList[k]}</label>`;
+                    html += `<tr><td><label for="resume-mic-${k}"><b>${microphoneNameList[k]}</b></label></td><td>`;
                     if (k >= devices.length) {
-                        html += `<span id="resume-mic-${k}">not available</span><br/>`;
+                        html += `<span id="resume-mic-${k}">not available</span></td></tr>`;
                         continue;
                     }
 
-                    html += `<select class="resume-mic-select" name="resume-mic-${k}" id="resume-mic-${k}">`
+                    html += `<select class="resume-mic-select" name="resume-mic-${k}" id="resume-mic-${k}" required><option hidden disabled selected value> -- select an option -- </option>`
                     for (let i in devices) {
                         html += `<option value="${devices[i].deviceId}">${i}. ${devices[i].label ? devices[i].label : devices[i].kind}</option>`
                     }
-                    html += `</select><br/>`
+                    html += `</select></td></tr>`
                 }
-                html += `</fieldset></div>`;
+                html += `</table><br/><div class="ui-state-error ui-state-highlight" id="resume-dup"><b>Please select distinct (non-duplicated) microphone</b></div></fieldset></div>`;
 
-                let select = $(html).dialog({
-
-                }).find('select.resume-mic-select')
-
-                $(select).selectmenu({
-                    change: (event, data) => {
-
-                    }
+                html = jQuery(html).dialog({
+                    modal: true,
+                    height: 'auto',
+                    width: 'auto',
+                    buttons: [{
+                        text: "Set",
+                        icon: 'ui-icon-check',
+                        click: function () {
+                            if (checkSelect()) {
+                                //jQuery(html).find('select.resume-mic-select > option:selected').each()
+                                let r = [];
+                                for (let k in microphoneNameList) {
+                                    let v = jQuery(`#resume-mic-${k} option:selected`).prop('value');
+                                    if (v) {
+                                        r.push({
+                                            name: microphoneNameList[k],
+                                            constrain: { deviceId: { exact: v } }
+                                        });
+                                    }
+                                }
+                                resolve(r);
+                                jQuery(html).dialog('close');
+                            }
+                        }
+                    }]
                 });
+                jQuery(html).find('td, th').css('padding', '5px 8px');
+
+                let select = jQuery(html).find('select.resume-mic-select');
+
+                function checkSelect() {
+                    let ok = true;
+                    jQuery(select).parents('tr').removeClass("ui-state-error ui-state-highlight");
+                    jQuery(html).find('#resume-dup').hide();
+                    jQuery(html).find('div.ui-dialog-buttonset > button').show();
+                    jQuery(select).each((k, v) => {
+                        val = jQuery(v).find('option:selected').prop('value');
+                        if (!val) {
+                            jQuery(html).find('#resume-dup').show();
+                            jQuery(html).find('.ui-dialog-buttonset').hide();
+                            jQuery(v).parents('tr').addClass("ui-state-error ui-state-highlight");
+                            ok = false;
+                        }
+                        jQuery(select).each((i, j) => {
+                            if (k <= i)
+                                return;
+                            if (val == jQuery(j).find('option:selected').prop('value')) {
+                                // console.log(k, i, val)
+                                jQuery(j).parents('tr').addClass("ui-state-error ui-state-highlight");
+                                jQuery(v).parents('tr').addClass("ui-state-error ui-state-highlight");
+                                jQuery(html).find('#resume-dup').show();
+                                ok = false;
+                            }
+                        });
+                    });
+                    return ok;
+                }
+
+                jQuery(select).selectmenu({
+                    change: () => { checkSelect(); }
+                }).parents('tr').addClass("ui-state-error ui-state-highlight");
 
             }).catch(e => reject(e));
 
@@ -649,9 +709,9 @@ class Resume extends ResumeChild {
 
     }
 
-    _warningOneMicrophone() {
+    _warningOneMicrophone(...arg) {
         let e = 'Warning! You can use only one default microphone.\n\nBecause your browser doesn\'t support navigator.mediaDevices.enumerateDevices. This will significantly affects transcription quality.\n\nPlease contact your technician.';
-        console.warn(e);
+        console.warn(e, ...arg);
         alert(e);
     }
 
