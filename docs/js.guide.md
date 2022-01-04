@@ -123,8 +123,8 @@ And include into your front-end HTML.
     <!-- Socket.IO Client -->
     <script src="/socket.io/socket.io.js"></script>
     <!-- Resume and jQuery -->
-    <script src="/resume/jquery.min.js"></script>
-    <script src="/resume/Resume.js"></script>
+    <script src="/resume/js/jquery.min.js"></script>
+    <script src="/resume/js/Resume.js"></script>
 
     <!-- ... -->
 </head>
@@ -132,7 +132,7 @@ And include into your front-end HTML.
     <!-- ... -->
 
     <!-- RecordRTC -->
-    <script src="/resume/RecordRTC.min.js"></script>
+    <script src="/resume/js/RecordRTC.min.js"></script>
     <!-- ... -->
 </body>
 ```
