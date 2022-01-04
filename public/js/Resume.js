@@ -527,6 +527,7 @@ class ResumeRecorder {
 class Resume extends ResumeChild {
 
     recorder
+    _micID
 
     /** 
     * class constructor and set the event listener of socket.io
@@ -572,6 +573,86 @@ class Resume extends ResumeChild {
 
         this.socket.on(EVENT_SERVER_SESSION_ID, (res, cookies) => this._sioReceiveSessionID(res, cookies));
         this.socket.on(STREAM_ERROR, (sessionId, sectionID, e) => this._handleError(sessionId, sectionID, e));
+    }
+
+    _defaultMicDialog(microphoneNameList) {
+        microphoneNameList = microphoneNameList || this.microphoneName || ['service provider', 'user', 'noise-cancelling'];
+        return new Promise((resolve, reject) => {
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                // !! Error also thrown when access via mobile without https.
+                let e = 'Error! Because this browser does not supports WebRTC getUserMedia API, or the API does not work with HTTP (not HTTPS).';
+                if (!!navigator.getUserMedia) {
+                    e += ' This browser seems supporting deprecated getUserMedia API.';
+                }
+                reject({ message: e, mediaDevices: navigator.mediaDevices });
+            }
+
+            if (!navigator.mediaDevices.enumerateDevices) {
+                // !! not support navigator.mediaDevices.enumerateDevices
+                this._warningOneMicrophone();
+                // Return default one: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+                resolve([true]);
+                return;
+            }
+
+            navigator.mediaDevices.enumerateDevices().then(devices => {
+                // count audioinput
+                devices = devices.filter(v => (device && (device.kind == 'audioinput')));
+                //let count = devices.reduce((count, device) => count + (device && (device.kind == 'audioinput')), 0);
+
+                if (devices.length <= 0) {
+                    reject({ message: 'Not found any available microphone.', mediaDevices: navigator.mediaDevices, devices: devices });
+                    return;
+                } else if (devices.length == 1) {
+                    this._warningOneMicrophone();
+                    // Return default one: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+                    resolve([true]);
+                    return;
+                }
+
+
+                let html = `<div id="resume-dialog-mic"><h1>Please choose microphone(s)</h1>`;
+                if (devices.length < microphoneNameList.length) {
+                    html += `<h2><b>Warning!</b> avaliable microphones are not enough for all requirements.</h2>`
+                }
+                html += `<fieldset>`;
+                for (let k in microphoneNameList) {
+                    html += `<label for="resume-mic-${k}">${microphoneNameList[k]}</label>`;
+                    if (k >= devices.length) {
+                        html += `<span id="resume-mic-${k}">not available</span><br/>`;
+                        continue;
+                    }
+
+                    html += `<select class="resume-mic-select" name="resume-mic-${k}" id="resume-mic-${k}">`
+                    for (let i in devices) {
+                        html += `<option value="${devices[i].deviceId}">${i}. ${devices[i].label ? devices[i].label : devices[i].kind}</option>`
+                    }
+                    html += `</select><br/>`
+                }
+                html += `</fieldset></div>`;
+
+                let select = $(html).dialog({
+
+                }).find('select.resume-mic-select')
+
+                $(select).selectmenu({
+                    change: (event, data) => {
+
+                    }
+                });
+
+            }).catch(e => reject(e));
+
+
+        });
+
+    }
+
+    _warningOneMicrophone() {
+        let e = 'Warning! You can use only one default microphone.\n\nBecause your browser doesn\'t support navigator.mediaDevices.enumerateDevices. This will significantly affects transcription quality.\n\nPlease contact your technician.';
+        console.warn(e);
+        alert(e);
     }
 
     _onRecorderStageChanged(state) {
