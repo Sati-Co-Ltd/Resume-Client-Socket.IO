@@ -1,7 +1,14 @@
-<script src="./resume/js/js/jquery.min.js"></script>
-<script src="./resume/js/js/jquery-ui.min.js"></script>
-<link rel="stylesheet" type="text/css" href="./resume/js/css/jquery-ui.min.css" />
+<script src="./resume/js/jquery.min.js"></script>
+<script src="./resume/js/jquery-ui.min.js"></script>
+<link rel="stylesheet" type="text/css" href="./resume/css/jquery-ui.min.css" />
 <script>
+    var reject = (e) => {
+        console.error(e);
+    }
+    var resolve = v => {
+        console.log('Resolve', v);
+    }
+    var microphoneNameList = ['service provider', 'user', 'noise-cancelling'];
     $(document).ready(() => {
 
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -22,8 +29,10 @@
         }
 
         navigator.mediaDevices.enumerateDevices().then(devices => {
+            console.log(devices);
             // count audioinput
-            devices = devices.filter(v => (device && (device.kind == 'audioinput')));
+            devices = devices.filter(device => (device && (device.kind == 'audioinput')));
+            console.log(devices);
             //let count = devices.reduce((count, device) => count + (device && (device.kind == 'audioinput')), 0);
 
             if (devices.length <= 0) {
@@ -32,7 +41,10 @@
             } else if (devices.length == 1) {
                 this._warningOneMicrophone();
                 // Return default one: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-                resolve([true]);
+                resolve([{
+                    name: microphoneNameList[0],
+                    constrain: true
+                }]);
                 return;
             }
 
@@ -41,32 +53,83 @@
             if (devices.length < microphoneNameList.length) {
                 html += `<h2><b>Warning!</b> avaliable microphones are not enough for all requirements.</h2>`
             }
-            html += `<fieldset>`;
+            html += `<fieldset><table style="border-spacing: 10px; width: 100%">`;
             for (let k in microphoneNameList) {
-                html += `<label for="resume-mic-${k}">${microphoneNameList[k]}</label>`;
+                html += `<tr><td><label for="resume-mic-${k}"><b>${microphoneNameList[k]}</b></label></td><td>`;
                 if (k >= devices.length) {
-                    html += `<span id="resume-mic-${k}">not available</span><br/>`;
+                    html += `<span id="resume-mic-${k}">not available</span></td></tr>`;
                     continue;
                 }
 
-                html += `<select class="resume-mic-select" name="resume-mic-${k}" id="resume-mic-${k}">`
+                html += `<select class="resume-mic-select" name="resume-mic-${k}" id="resume-mic-${k}" required><option hidden disabled selected value> -- select an option -- </option>`
                 for (let i in devices) {
                     html += `<option value="${devices[i].deviceId}">${i}. ${devices[i].label ? devices[i].label : devices[i].kind}</option>`
                 }
-                html += `</select><br/>`
+                html += `</select></td></tr>`
             }
-            html += `</fieldset></div>`;
+            html += `</table><br/><div class="ui-state-error ui-state-highlight" id="resume-dup"><b>Please select distinct (non-duplicated) microphone</b></div></fieldset></div>`;
 
-            let select = $(html).dialog({
+            html = $(html).dialog({
+                modal: true,
+                height: 'auto',
+                width: 'auto',
+                buttons: [{
+                    text: "Set",
+                    icon: 'ui-icon-check',
+                    click: function () {
+                        if (checkSelect()) {
+                            //$(html).find('select.resume-mic-select > option:selected').each()
+                            let r = [];
+                            for (let k in microphoneNameList) {
+                                let v = $(`#resume-mic-${k} option:selected`).prop('value');
+                                if (v) {
+                                    r.push({
+                                        name: microphoneNameList[k],
+                                        constrain: { deviceId: { exact: v } }
+                                    });
+                                }
+                            }
+                            resolve(r);
+                            $(html).dialog('close');
+                        }
+                    }
+                }]
+            });
+            $(html).find('td, th').css('padding', '5px 8px');
 
-            }).find('select.resume-mic-select')
+            let select = $(html).find('select.resume-mic-select');
+
+            function checkSelect() {
+                let ok = true;
+                $(select).parents('tr').removeClass("ui-state-error ui-state-highlight");
+                $(html).find('#resume-dup').hide();
+                $(html).find('div.ui-dialog-buttonset > button').show();
+                $(select).each((k, v) => {
+                    val = $(v).find('option:selected').prop('value');
+                    if (!val) {
+                        $(html).find('#resume-dup').show();
+                        $(html).find('.ui-dialog-buttonset').hide();
+                        $(v).parents('tr').addClass("ui-state-error ui-state-highlight");
+                        ok = false;
+                    }
+                    $(select).each((i, j) => {
+                        if (k <= i)
+                            return;
+                        if (val == $(j).find('option:selected').prop('value')) {
+                            // console.log(k, i, val)
+                            $(j).parents('tr').addClass("ui-state-error ui-state-highlight");
+                            $(v).parents('tr').addClass("ui-state-error ui-state-highlight");
+                            $(html).find('#resume-dup').show();
+                            ok = false;
+                        }
+                    });
+                });
+                return ok;
+            }
 
             $(select).selectmenu({
-                change: (event, data) => {
-                    console.log(event);
-                    console.log(data);
-                }
-            });
+                change: () => { checkSelect(); }
+            }).parents('tr').addClass("ui-state-error ui-state-highlight");
 
         }).catch(e => reject(e));
 
@@ -79,15 +142,22 @@
 
 <div id="resume-dialog-mic-test">
     <fieldset>
-        <label for="mic-1">Microphone for <span></span></label>
-        <select name="mic-1" id="mic-1">
-            <option value="id1">name1</option>
-            <option value="id2">name2</option>
-        </select><br>
-        <label for="mic-1">Microphone for <span></span></label>
-        <select name="mic-1" id="mic-1">
-            <option value="id1">name1</option>
-            <option value="id2">name2</option>
-        </select>
+        <table>
+            <tr>
+                <td><label for="mic-1">BBBBBBBBBBBB</label></td>
+                <td><select name="mic-1" id="mic-1">
+                        <option value="id1">name1</option>
+                        <option value="id2">name2</option>
+                    </select></td>
+            </tr>
+            <tr>
+                <td><label for="mic-2"><span>aaaaa</span></label></td>
+                <td><select name="mic-2" id="mic-2">
+                        <option value="id1">name1</option>
+                        <option value="id2">name2</option>
+                    </select></td>
+            </tr>
+        </table>
+
     </fieldset>
 </div>
