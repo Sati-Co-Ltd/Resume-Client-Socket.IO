@@ -290,7 +290,7 @@ class ResumeChild extends AbstractResume {
             console.log('Emit stream... ', this.sessionId, "\nCount ID: ", info._id, "\nsize = ", (blob ? (blob.reduce((prev, c) => prev.push(c.size / 1024), [])) : null), ' KB\nCookie: ', this._cookies);
             this.socket.emit(SS_AUDIO_STREAM, blob, info, this.sessionId, this.sectionID, this._cookies);
         }
-        if (blob) {
+        if (blob && blob.length) {
             for (let k in blob) {
                 this._sentBlobCount[k]++;
                 this.sentBlobSize[k] += blob[k].size;
