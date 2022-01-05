@@ -415,6 +415,7 @@ class ResumeRecorder {
     _newRecordRTC(Pushblob, msSoundChuck, onStateChanged) {
         if (!this.microphone) {
             this._captureMicrophone(() => this._newRecordRTC(Pushblob, msSoundChuck, onStateChanged));
+            return;
         }
         this.recorder = RecordRTC(this.microphone, {
             type: 'audio',
@@ -433,7 +434,7 @@ class ResumeRecorder {
         if (this.recorder) {
             this.recorder.reset();
         } else {
-            this.alertError('Recorder is not started! Please call _newRecordRTC')
+            this._handleError('Recorder is not started! Please call _newRecordRTC')
             //this._newRecordRTC(Pushblob, msSoundChuck, onStateChanged);
         }
 
@@ -587,19 +588,6 @@ class Resume extends ResumeChild {
                 );
             }
         });
-
-
-        for (let k in this.microphoneName) {
-            console.log('Prepare mic', k, this.microphoneName[k]);
-            this.recorder[k] = new ResumeRecorder();
-            let newMic = () => this.recorder[k]._newRecordRTC(
-                (blob) => this._setBlob(blob, k),
-                this.msSoundChuck,
-                (state) => this._onRecorderStageChanged(state)
-            );
-            if (this.recorder[k]._prepareNewSession(newMic))
-                newMic();
-        }
     }
 
     chooseMicDialog(microphoneNameList) {
@@ -703,7 +691,7 @@ class Resume extends ResumeChild {
                     jQuery(html).find('#resume-dup').hide();
                     jQuery(html).find('div.ui-dialog-buttonset > button').show();
                     jQuery(select).each((k, v) => {
-                        val = jQuery(v).find('option:selected').prop('value');
+                        let val = jQuery(v).find('option:selected').prop('value');
                         if (!val) {
                             jQuery(html).find('#resume-dup').show();
                             jQuery(html).find('.ui-dialog-buttonset').hide();
@@ -725,8 +713,8 @@ class Resume extends ResumeChild {
                     return ok;
                 }
 
-                jQuery(select).selectmenu({
-                    change: () => { checkSelect(); }
+                jQuery(select).change(() => {
+                    checkSelect();
                 }).parents('tr').addClass("ui-state-error ui-state-highlight");
 
             }).catch(e => reject(e));
