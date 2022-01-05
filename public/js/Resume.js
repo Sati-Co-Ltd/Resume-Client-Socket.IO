@@ -647,13 +647,22 @@ class Resume extends ResumeChild {
                         continue;
                     }
 
-                    html += `<select class="resume-mic-select" name="resume-mic-${k}" id="resume-mic-${k}" required><option hidden disabled selected value> -- select an option -- </option>`
+                    html += `<select class="resume-mic-select" name="resume-mic-${k}" id="resume-mic-${k}" required>`
+                    if (k == 0) {
+                        html += `<option hidden disabled selected value> -- select an option -- </option>`;
+                    } else {
+                        html += `<option selected value> -- select an option -- </option>`;
+                    }
                     for (let i in devices) {
                         html += `<option value="${devices[i].deviceId}">${i}. ${devices[i].label ? devices[i].label : devices[i].kind}</option>`
                     }
                     html += `</select></td></tr>`
                 }
-                html += `</table><br/><div class="ui-state-error ui-state-highlight" id="resume-dup"><b>Please select distinct (non-duplicated) microphone</b></div></fieldset></div>`;
+                html += `</table><br/>
+<div class="ui-state-error" id="resume-dup"><span class="ui-icon ui-icon-alert"></span> <b>Please select distinct (non-duplicated) microphone</b></div>
+<div class="ui-state-error" id="resume-blnk"><span class="ui-icon ui-icon-alert"></span> <b>Please select microphone</b></div>
+<div class="ui-state-highlight" id="resume-warn"><span class="ui-icon ui-icon-info"></span> <b>Omits blank input(s)</b></div>
+</fieldset></div>`;
 
                 html = jQuery(html).dialog({
                     modal: true,
@@ -688,25 +697,43 @@ class Resume extends ResumeChild {
                 function checkSelect() {
                     let ok = true;
                     jQuery(select).parents('tr').removeClass("ui-state-error ui-state-highlight");
-                    jQuery(html).find('#resume-dup').hide();
-                    jQuery(html).find('div.ui-dialog-buttonset > button').show();
+                    jQuery(html).find('#resume-dup,#resume-blnk,#resume-warn').hide();
+
                     jQuery(select).each((k, v) => {
                         let val = jQuery(v).find('option:selected').prop('value');
                         if (!val) {
-                            jQuery(html).find('#resume-dup').show();
-                            jQuery(html).find('.ui-dialog-buttonset').hide();
-                            jQuery(v).parents('tr').addClass("ui-state-error ui-state-highlight");
-                            ok = false;
-                        }
-                        jQuery(select).each((i, j) => {
-                            if (k <= i)
-                                return;
-                            if (val == jQuery(j).find('option:selected').prop('value')) {
-                                // console.log(k, i, val)
-                                jQuery(j).parents('tr').addClass("ui-state-error ui-state-highlight");
-                                jQuery(v).parents('tr').addClass("ui-state-error ui-state-highlight");
-                                jQuery(html).find('#resume-dup').show();
+                            if (k == 0) {
+                                // Raise error for 1st mic
+                                jQuery(html).find('#resume-blnk').show();
+                                jQuery(v).parents('tr').addClass("ui-state-error");
                                 ok = false;
+                            } else {
+                                jQuery(html).find('#resume-warn').show();
+                                jQuery(v).parents('tr').addClass("ui-state-highlight");
+                            }
+                        }
+
+                        jQuery(select).each((i, j) => {
+                            if (k >= i)
+                                return;
+                            let vj = jQuery(j).find('option:selected').prop('value');
+                            if (!vj) {
+                                // undefined
+                                jQuery(html).find('#resume-warn').show();
+                                jQuery(j).parents('tr').addClass("ui-state-highlight");
+                            } else {
+                                if (!val) {
+                                    // val is undefined but  vj is defined
+                                    // console.log(k, i, val, vj)
+                                    jQuery(html).find('#resume-blnk').show();
+                                    jQuery(v).parents('tr').addClass("ui-state-error");
+                                    ok = false;
+                                } else if (val == vj) {
+                                    jQuery(j).parents('tr').addClass("ui-state-error");
+                                    jQuery(v).parents('tr').addClass("ui-state-error");
+                                    jQuery(html).find('#resume-dup').show();
+                                    ok = false;
+                                }
                             }
                         });
                     });
@@ -715,7 +742,8 @@ class Resume extends ResumeChild {
 
                 jQuery(select).change(() => {
                     checkSelect();
-                }).parents('tr').addClass("ui-state-error ui-state-highlight");
+                }); //.parents('tr').addClass("ui-state-error ui-state-highlight");
+                checkSelect();
 
             }).catch(e => reject(e));
         });
