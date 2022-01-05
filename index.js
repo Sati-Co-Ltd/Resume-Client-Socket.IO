@@ -387,6 +387,7 @@ function SIOOnConnection(optionSIO) {
                     }
                     return resolve({
                         data: {
+                            section_id: sectionId,
                             session_id: sessionID,
                             pseudoIdentifier: pseudoID
                         },
@@ -424,7 +425,7 @@ function SIOOnConnection(optionSIO) {
                     // Assign callback for Session
                     restClient.onApiPushResult[res.data.session_id] = (data) => {
                         // same to updateResult callback
-                        serverResponse(res.data.session_id, sectionID, res.cookies, data);
+                        serverResponse(res.data.session_id, sectionId, res.cookies, data);
                     }
                 }
             });
@@ -441,7 +442,7 @@ function SIOOnConnection(optionSIO) {
             return pCreate;
         });
 
-        socket.on(SS_AUDIO_STREAM, function (blob, info, sessionId, sectionID, cookies) {
+        socket.on(SS_AUDIO_STREAM, function (blob, info, sessionId, sectionId, cookies) {
             /**
              * On recieved audio stream or end event
              */
@@ -450,7 +451,7 @@ function SIOOnConnection(optionSIO) {
             logger.info({
                 socket: socket,
                 sessionId: sessionId,
-                sectionID: sectionID,
+                sectionID: sectionId,
                 info: info,
                 cookies: cookies,
                 blobSize: blob ? blob.length : blob
@@ -461,13 +462,13 @@ function SIOOnConnection(optionSIO) {
 
             // Comment for debug
             /*
-            restClient.sendSound(sessionId, sectionID, info, blob, cookies)
+            restClient.sendSound(sessionId, sectionId, info, blob, cookies)
                 .then(data => {
                     let end = data.is_end || info.is_end;
-                    serverResponse(sessionId, sectionID, cookies, data, end);
+                    serverResponse(sessionId, sectionId, cookies, data, end);
                     if (end && optionSIO.onReceivedEndTranscriptSessionCallback && (typeof optionSIO.onReceivedEndTranscriptSessionCallback == 'function'))
-                        optionSIO.onReceivedEndTranscriptSessionCallback(socket, sessionId, sectionID, data);
-                }).catch(err => { serverErr(sessionId, sectionID, _last_update, cookies, err); });
+                        optionSIO.onReceivedEndTranscriptSessionCallback(socket, sessionId, sectionId, data);
+                }).catch(err => { serverErr(sessionId, sectionId, _last_update, cookies, err); });
                 */
 
             // Test code
@@ -475,10 +476,10 @@ function SIOOnConnection(optionSIO) {
             let prom = [];
             for (let mic in blob) {
                 prom.push(new Promise((res, rej) => {
-                    fs.writeFile(`temp/${sessionId}/${mic}/${info.id[mic]}.bin`, blob[mic], 'w+', e => {
+                    fs.writeFile(`temp/${sessionId}/${mic}-${info.id[mic]}.bin`, blob[mic], 'w+', e => {
                         if (e) {
                             e.mic = mic;
-                            console.error('Error from write file', mic, e);
+                            console.error('Error from write file', mic);
                             rej(e);
                         }
                         res(mic);
@@ -486,7 +487,7 @@ function SIOOnConnection(optionSIO) {
                 }));
             }
             Promise.all(prom).then(res => {
-                serverResponse(sessionId, sectionID, cookies, { info: info, update: Date.now(), res: res }, is_end);
+                serverResponse(sessionId, sectionId, cookies, { session_id: sessionId, section_id: sectionId, info: info, update: Date.now(), res: res }, is_end);
             }).catch(e => {
                 console.error(e);
             });
@@ -494,10 +495,10 @@ function SIOOnConnection(optionSIO) {
 
 
             if (optionSIO.onReceivedSoundCallback && ((typeof optionSIO.onReceivedSoundCallback) == 'function'))
-                optionSIO.onReceivedSoundCallback(socket, sessionId, sectionID, blob, info);
+                optionSIO.onReceivedSoundCallback(socket, sessionId, sectionId, blob, info);
 
             if (info.is_end && optionSIO.onEndTranscriptSessionCallback && (typeof optionSIO.onEndTranscriptSessionCallback == 'function'))
-                optionSIO.onEndTranscriptSessionCallback(socket, sessionId, sectionID, info);
+                optionSIO.onEndTranscriptSessionCallback(socket, sessionId, sectionId, info);
         });
 
     };

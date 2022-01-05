@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "node app.js  | pino-pretty"
+    "test": "node app.js  | pino-pretty -L warn"
   },
   "keywords": [],
   "author": "",
