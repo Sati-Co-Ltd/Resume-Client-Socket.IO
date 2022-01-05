@@ -287,7 +287,7 @@ class ResumeChild extends AbstractResume {
             console.log("Add blob to queue" + info)
             this._waitBlobs.push([blob, info]);
         } else if (this._waitBlobs.length <= 0) {
-            console.log('Emit stream... ', this.sessionId, "\nCount ID: ", info._id, "\nsize = ", (blob ? (blob.reduce((prev, c) => prev.push(c.size / 1024), [])) : null), ' KB\nCookie: ', this._cookies);
+            console.log('Emit stream... ', this.sessionId, "\nCount ID: ", info._id, "\nsize = ", (blob ? (blob.map(c => (c.size || c.length || -1024) / 1024)) : null), ' KB\nCookie: ', this._cookies);
             this.socket.emit(SS_AUDIO_STREAM, blob, info, this.sessionId, this.sectionID, this._cookies);
         }
         if (blob && blob.length) {
