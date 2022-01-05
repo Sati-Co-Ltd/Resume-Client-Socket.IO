@@ -368,12 +368,12 @@ function SIOOnConnection(optionSIO) {
 
 
             // Commend for debug
-            /*
+
             let pCreate = restClient.newSession(sectionId, lang || null, hint || null, docFormat || null, multiSpeaker || false, userStartTime);
-            */
+
 
             // False pCreate for debug
-            let pCreate = new Promise((resolve, reject) => {
+            /*let pCreate = new Promise((resolve, reject) => {
                 let sessionID = Math.random();
                 let pseudoID = Math.LN10;
                 logger.debug(`Create session ID = ${sessionID}, PseudoID = ${pseudoID}`)
@@ -395,7 +395,7 @@ function SIOOnConnection(optionSIO) {
                     });
                 });
 
-            });
+            });*/
 
             // Original Code
             pCreate.then((res) => {
@@ -461,7 +461,7 @@ function SIOOnConnection(optionSIO) {
             // Send Message to  Server
 
             // Comment for debug
-            /*
+
             restClient.sendSound(sessionId, sectionId, info, blob, cookies)
                 .then(data => {
                     let end = data.is_end || info.is_end;
@@ -469,10 +469,10 @@ function SIOOnConnection(optionSIO) {
                     if (end && optionSIO.onReceivedEndTranscriptSessionCallback && (typeof optionSIO.onReceivedEndTranscriptSessionCallback == 'function'))
                         optionSIO.onReceivedEndTranscriptSessionCallback(socket, sessionId, sectionId, data);
                 }).catch(err => { serverErr(sessionId, sectionId, _last_update, cookies, err); });
-                */
+
 
             // Test code
-
+            /*
             let prom = [];
             for (let mic in blob) {
                 prom.push(new Promise((res, rej) => {
@@ -497,7 +497,7 @@ function SIOOnConnection(optionSIO) {
             }).catch(e => {
                 console.error(e);
             });
-
+            */
 
             // original code
             if (optionSIO.onReceivedSoundCallback && ((typeof optionSIO.onReceivedSoundCallback) == 'function'))
