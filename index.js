@@ -12,6 +12,8 @@
 const path = require('path');
 const pino = require('pino');
 
+// Test code
+const fs = require('fs');
 
 const
     EVENT_CLIENT_INIT = 'press-record',
@@ -378,13 +380,20 @@ function SIOOnConnection(optionSIO) {
                 if (sessionID < 0.1)
                     return reject({ message: `Test Error session ID = ${sessionID}, PseudoID = ${pseudoID}` });
 
-                return resolve({
-                    data: {
-                        session_id: sessionID,
-                        pseudoIdentifier: pseudoID
-                    },
-                    cookies: 'the=cookies'
-                })
+                fs.mkdir(`temp/${sessionID}`, e => {
+                    if (e) {
+                        console.error(e);
+                        reject(e);
+                    }
+                    return resolve({
+                        data: {
+                            session_id: sessionID,
+                            pseudoIdentifier: pseudoID
+                        },
+                        cookies: 'the=cookies'
+                    });
+                });
+
             });
 
             // Original Code
@@ -462,7 +471,27 @@ function SIOOnConnection(optionSIO) {
                 */
 
             // Test code
-            serverResponse(sessionId, sectionID, cookies, { info: info, update: Date.now() }, is_end)
+
+            let prom = [];
+            for (let mic in blob) {
+                prom.push(new Promise((res, rej) => {
+                    fs.writeFile(`temp/${sessionId}/${mic}/${info.id[mic]}.bin`, blob[mic], 'w+', e => {
+                        if (e) {
+                            e.mic = mic;
+                            console.error('Error from write file', mic, e);
+                            rej(e);
+                        }
+                        res(mic);
+                    });
+                }));
+            }
+            Promise.all(prom).then(res => {
+                serverResponse(sessionId, sectionID, cookies, { info: info, update: Date.now(), res: res }, is_end);
+            }).catch(e => {
+                console.error(e);
+            });
+
+
 
             if (optionSIO.onReceivedSoundCallback && ((typeof optionSIO.onReceivedSoundCallback) == 'function'))
                 optionSIO.onReceivedSoundCallback(socket, sessionId, sectionID, blob, info);
