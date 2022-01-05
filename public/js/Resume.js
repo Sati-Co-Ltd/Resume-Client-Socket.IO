@@ -392,26 +392,30 @@ class ResumeRecorder {
     microphone
     alertError
     msSoundChuck = 1000
+    micConstrain = true
 
     /** 
     * Get status of recoder can be one of REC_PAUSED = "paused", REC_STOP = "stopped", REC_INACTIVE = "inactive", REC_RECORDING = "recording", REC_NULL = null
     * @summary get status of recoder
     * @return {(string|null)} recorder status null, "recording", "paused", "stopped" or "inactive".
     */
+
+    constructor(Pushblob, msSoundChuck, onStateChanged, microphoneConstrain) {
+        if (typeof microphoneConstrain != 'undefined') {
+            this.micConstrain = microphoneConstrain;
+        }
+        this._newRecordRTC(Pushblob, msSoundChuck, onStateChanged);
+    }
     getStatus() {
         if (!this.recorder)
             return REC_NULL;
         return this.recorder.state;
     }
-    _prepareNewSession(callback_if_retry) {
-        if (!this.microphone) {
-            this._captureMicrophone(callback_if_retry);
-            return false;
-        }
-        return true;
-    }
 
     _newRecordRTC(Pushblob, msSoundChuck, onStateChanged) {
+        if (!this.microphone) {
+            this._captureMicrophone(() => this._newRecordRTC(Pushblob, msSoundChuck, onStateChanged));
+        }
         this.recorder = RecordRTC(this.microphone, {
             type: 'audio',
             mimeType: 'audio/wav',
@@ -485,24 +489,22 @@ class ResumeRecorder {
         // Show Prompt to select device https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/enumerateDevices
         // Force select device by ID  https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
         // Dropdown Dialog https://jqueryui.com/dialog/#modal-form
+        if ((navigator.userAgent.indexOf('Edge') === -1) || (!navigator.msSaveOrOpenBlob && !navigator.msSaveBlob)) {
+            if (this.micConstrain === true)
+                this.micConstrain = { echoCancellation: false };
+            else
+                this.micConstrain['echoCancellation'] = false;
+        }
+
         navigator.mediaDevices.getUserMedia({
-            audio: (
-                navigator.userAgent.indexOf('Edge') !== -1 &&
-                (!!navigator.msSaveOrOpenBlob || !!navigator.msSaveBlob)
-            ) ? true : { echoCancellation: false }
-        })
-            .then(mic => {
-                this.microphone = mic;
-                callback();
-            })
-            .catch(error => {
-                this._logError('Unable to capture your microphone. Please check web browser\'s console logs.');
-                this._logError(error);
-            });
-    }
-
-    _defaultMicDialog(micName, onSelectCallback, onCancelCallback) {
-
+            audio: this.micConstrain
+        }).then(mic => {
+            this.microphone = mic;
+            callback();
+        }).catch(error => {
+            this._logError('Unable to capture your microphone. Please check web browser\'s console logs.');
+            this._logError(error);
+        });
     }
 
     _logError(e) {
@@ -550,9 +552,42 @@ class Resume extends ResumeChild {
             this.microphoneName = ["default"];
         }
 
-        this._blobChunk = new Array(this.microphoneName.length).fill(undefined);
-        this._blobEnd = new Array(this.microphoneName.length).fill(false);
-        this.recorder = new Array(this.microphoneName.length);
+
+        this.socket = socket;
+        this.socket.on('connection', (...arg) => this._sioConnectionCallback(...arg));
+        this.socket.on('disconnection', (...arg) => this._sioDisconnectionCallback(...arg));
+        this.socket.on(SS_RESP_TRNSCR, (...arg) => this._sioReceiveTranscript(...arg));
+
+        this.socket.on(EVENT_SERVER_SESSION_ID, (res, cookies) => this._sioReceiveSessionID(res, cookies));
+        this.socket.on(STREAM_ERROR, (sessionId, sectionID, e) => this._handleError(sessionId, sectionID, e));
+
+        this.chooseMicrophone();
+    }
+
+    chooseMicrophone() {
+        if (this.recorder && this.recorder.length) {
+            if (this.recorder.some(v => v && ((v.getStatus() == REC_RECORDING) || (v.getStatus() == REC_PAUSED))))
+                alert('Please stop this session before change devices');
+            return;
+        }
+        this.chooseMicDialog(this.microphoneNameList).then(mics => {
+            this._micID = mics;
+            let k = this._micID.length;
+
+            this._blobChunk = new Array(k).fill(undefined);
+            this._blobEnd = new Array(k).fill(false);
+            this.recorder = new Array(k);
+            for (let k in this._micID) {
+                console.log('Prepare mic', k, this._micID[k].name);
+                this.recorder[k] = new ResumeRecorder(
+                    (blob) => this._setBlob(blob, k),
+                    this.msSoundChuck,
+                    (state) => this._onRecorderStageChanged(state),
+                    this._micID[k].constrain
+                );
+            }
+        });
+
 
         for (let k in this.microphoneName) {
             console.log('Prepare mic', k, this.microphoneName[k]);
@@ -565,17 +600,9 @@ class Resume extends ResumeChild {
             if (this.recorder[k]._prepareNewSession(newMic))
                 newMic();
         }
-
-        this.socket = socket;
-        this.socket.on('connection', (...arg) => this._sioConnectionCallback(...arg));
-        this.socket.on('disconnection', (...arg) => this._sioDisconnectionCallback(...arg));
-        this.socket.on(SS_RESP_TRNSCR, (...arg) => this._sioReceiveTranscript(...arg));
-
-        this.socket.on(EVENT_SERVER_SESSION_ID, (res, cookies) => this._sioReceiveSessionID(res, cookies));
-        this.socket.on(STREAM_ERROR, (sessionId, sectionID, e) => this._handleError(sessionId, sectionID, e));
     }
 
-    _defaultMicDialog(microphoneNameList) {
+    chooseMicDialog(microphoneNameList) {
         microphoneNameList = microphoneNameList || this.microphoneName || ['service provider', 'user', 'noise-cancelling'];
         return new Promise((resolve, reject) => {
 
@@ -703,8 +730,6 @@ class Resume extends ResumeChild {
                 }).parents('tr').addClass("ui-state-error ui-state-highlight");
 
             }).catch(e => reject(e));
-
-
         });
 
     }
@@ -760,8 +785,8 @@ class Resume extends ResumeChild {
                 );
         }
 
-        this._blobChunk = new Array(this.microphoneName.length).fill(undefined);
-        this._blobEnd = new Array(this.microphoneName.length).fill(false);
+        this._blobChunk = new Array(this._micID.length).fill(undefined);
+        this._blobEnd = new Array(this._micID.length).fill(false);
 
         //if (!this.recorder._prepareNewSession(() => this.newSession(hint, identifier, sectionID, docFormat, langSuggest)))
         //   return;
