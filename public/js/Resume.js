@@ -434,7 +434,7 @@ class ResumeRecorder {
         if (this.recorder) {
             this.recorder.reset();
         } else {
-            this._handleError('Recorder is not started! Please call _newRecordRTC')
+            this._logError('Recorder is not started! Please call _newRecordRTC')
             //this._newRecordRTC(Pushblob, msSoundChuck, onStateChanged);
         }
 
@@ -615,7 +615,7 @@ class Resume extends ResumeChild {
             }
 
             navigator.mediaDevices.enumerateDevices().then(devices => {
-                //console.log(devices);
+                console.log(devices);
                 // count audioinput
                 devices = devices.filter(device => (device && (device.kind == 'audioinput')));
                 //console.log(devices);
