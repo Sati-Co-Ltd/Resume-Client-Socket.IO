@@ -476,14 +476,20 @@ function SIOOnConnection(optionSIO) {
             let prom = [];
             for (let mic in blob) {
                 prom.push(new Promise((res, rej) => {
-                    fs.writeFile(`temp/${sessionId}/${mic}-${info.id[mic]}.bin`, blob[mic], 'w+', e => {
-                        if (e) {
-                            e.mic = mic;
-                            console.error('Error from write file', mic);
-                            rej(e);
-                        }
-                        res(mic);
-                    });
+                    logger.warn(`temp/${sessionId}/${mic}-${info.id[mic]}.bin`)
+                    try {
+                        fs.writeFile(`temp/${sessionId}/${mic}-${info.id[mic]}.bin`, blob[mic], 'w+', e => {
+                            if (e) {
+                                e.mic = mic;
+                                logger.error('Error from write file', mic);
+                                rej(e);
+                            }
+                            res(mic);
+                        });
+                    } catch (e) {
+                        rej(e);
+                    }
+
                 }));
             }
             Promise.all(prom).then(res => {
@@ -493,7 +499,7 @@ function SIOOnConnection(optionSIO) {
             });
 
 
-
+            // original code
             if (optionSIO.onReceivedSoundCallback && ((typeof optionSIO.onReceivedSoundCallback) == 'function'))
                 optionSIO.onReceivedSoundCallback(socket, sessionId, sectionId, blob, info);
 
