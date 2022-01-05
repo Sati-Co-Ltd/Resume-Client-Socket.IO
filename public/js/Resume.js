@@ -280,7 +280,7 @@ class ResumeChild extends AbstractResume {
             is_end: isEnd,
             tag: this.tag
         };
-        info._id = this._sentBlobCount;
+        info.id = this._sentBlobCount;
         info.user_transcript = userTranscript || this._intermediateUserTranscript();
 
         if ((this._waitBlobs.length > 0) || (!this.sessionId) || (this.sessionId == '') || (!this._cookies)) {
