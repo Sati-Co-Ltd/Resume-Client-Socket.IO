@@ -200,7 +200,7 @@ class ResumeChild extends AbstractResume {
         return (res && (res.session_id == this.sessionId) && (res.section_id == this.sectionID))
     }
     _sioReceiveSessionID(data, cookies) {
-        if (!data || (data.section_id != this.sectionID)) {
+        if (!data || !data.section_id || !this.sectionID || (data.section_id != this.sectionID)) {
             console.log('SectionID or SessionID not match');
             return;
         }
