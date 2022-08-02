@@ -1,6 +1,6 @@
 {
   "name": "resume-client-socket.io",
-  "version": "1.1.7",
+  "version": "1.2",
   "description": "Resume Client API for Socket.IO and Node.JS - Medical Speech to Summarized Text",
   "main": " ",
   "directories": {
