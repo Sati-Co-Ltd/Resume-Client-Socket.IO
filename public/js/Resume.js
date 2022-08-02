@@ -493,6 +493,7 @@ class ResumeRecorder {
 class ResumeOne extends ResumeChild {
 
     recorder
+    _pausePushBlobInterval
 
     /** 
     * class constructor and set the event listener of socket.io
@@ -589,16 +590,27 @@ class ResumeOne extends ResumeChild {
     * pause() - Pause the recording session if allowPause is true.
     */
     pause() {
-        if (this.allowPause)
+        if (this.allowPause) {
+            if (this._pausePushBlobInterval)
+                clearInterval(this._pausePushBlobInterval);
+
+            this._pausePushBlobInterval = setInterval(() => this._pushBlob(null, false), 1000);
             return this.recorder.pause();
+        }
         this._handleError(null, null, 'This ResumeOne object does not allow to pause!!');
     }
     /** 
     * resume() - Resume the paused session if allowPause is true.
     */
     resume() {
-        if (this.allowPause)
+        if (this.allowPause) {
+            if (this._pausePushBlobInterval) {
+                clearInterval(this._pausePushBlobInterval);
+                this._pausePushBlobInterval = null;
+            }
+
             return this.recorder.resume();
+        }
         this._handleError(null, null, 'This ResumeOne object does not allow to pause/resume!!');
 
     }
