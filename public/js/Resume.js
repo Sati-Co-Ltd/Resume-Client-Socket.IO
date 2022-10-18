@@ -201,7 +201,7 @@ class ResumeChild extends AbstractResume {
     }
     _sioReceiveSessionID(data, cookies) {
         if (!data || !data.section_id || !this.sectionID || (data.section_id != this.sectionID)) {
-            console.log('SectionID or SessionID not match');
+            console.log(`SectionID or SessionID not match: data(${data}), data.section_id(${data?data.section_id:undefined}), this.sectionID(${this.sectionID})`);
             return;
         }
         this.sessionId = data.session_id;
@@ -287,9 +287,10 @@ class ResumeChild extends AbstractResume {
             if (this.sessionId && (this.sessionId != '') && (this._cookies)) {
                 // push all queue to server
                 let sid = this.sessionId, sec = (this.sectionID || this.defaultSectionID), ck = this._cookies;
+                let _socket = this.socket
                 this._waitBlobs.forEach(function (val, i, wB) {
                     console.log('streaming wait queue..' + i);
-                    this.socket.emit(SS_AUDIO_STREAM, val[0], val[1], sid, sec, ck);
+                    _socket.emit(SS_AUDIO_STREAM, val[0], val[1], sid, sec, ck);
                     wB.splice(0, 1); // drop first
                 });
             } else {
